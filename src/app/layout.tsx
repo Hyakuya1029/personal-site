@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "我的博客",
-  description: "一个基于 Next.js 的个人博客",
+  title: "我的网站",
+  description: "个人网站",
 };
 
 export default function RootLayout({
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased bg-gray-50">
+        <Navbar />
+        {children}
+      </body>
     </html>
   );
 }

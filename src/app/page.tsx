@@ -1,53 +1,85 @@
-import Link from 'next/link';
-import { getAllPosts } from '@/lib/posts';
+'use client';
+
+import { useState } from 'react';
+import AboutCard from '@/components/AboutCard';
+import CalendarCard from '@/components/CalendarCard';
+import { PlaceholderCard1, PlaceholderCard2, PlaceholderCard3, PlaceholderCard4 } from '@/components/PlaceholderCards';
 
 export default function Home() {
-  const posts = getAllPosts();
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+
+  const handleMouseEnter = (cardId: string) => {
+    setHoveredCard(cardId);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredCard(null);
+  };
+
+  const getCardClassName = (cardId: string) => {
+    if (hoveredCard === null) {
+      return '';
+    }
+    if (hoveredCard === cardId) {
+      return '';
+    }
+    return 'scale-90 opacity-70';
+  };
 
   return (
-    <main className="min-h-screen p-8 max-w-4xl mx-auto">
-      <header className="mb-12 flex items-center justify-between">
-        <div className="text-center flex-1">
-          <h1 className="text-4xl font-bold mb-4">我的博客</h1>
-          <p className="text-gray-600">记录生活，分享思考</p>
+    <main className="min-h-screen p-12">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex flex-wrap justify-center items-center gap-6">
+          <div 
+            className={`animate-float transition-all duration-300 ${getCardClassName('about')}`}
+            onMouseEnter={() => handleMouseEnter('about')}
+            onMouseLeave={handleMouseLeave}
+          >
+            <AboutCard isHovered={hoveredCard === 'about'} />
+          </div>
+          
+          <div 
+            className={`animate-pulse-glow transition-all duration-300 ${getCardClassName('calendar')}`}
+            onMouseEnter={() => handleMouseEnter('calendar')}
+            onMouseLeave={handleMouseLeave}
+          >
+            <CalendarCard isHovered={hoveredCard === 'calendar'} />
+          </div>
+          
+          <div 
+            className={`animate-float-slow transition-all duration-300 ${getCardClassName('portfolio')}`}
+            onMouseEnter={() => handleMouseEnter('portfolio')}
+            onMouseLeave={handleMouseLeave}
+          >
+            <PlaceholderCard2 isHovered={hoveredCard === 'portfolio'} />
+          </div>
+          
+          <div 
+            className={`animate-float-fast transition-all duration-300 ${getCardClassName('ideas')}`}
+            onMouseEnter={() => handleMouseEnter('ideas')}
+            onMouseLeave={handleMouseLeave}
+          >
+            <PlaceholderCard3 isHovered={hoveredCard === 'ideas'} />
+          </div>
+          
+          <div 
+            className={`animate-breathe transition-all duration-300 ${getCardClassName('favorites')}`}
+            onMouseEnter={() => handleMouseEnter('favorites')}
+            onMouseLeave={handleMouseLeave}
+          >
+            <PlaceholderCard4 isHovered={hoveredCard === 'favorites'} />
+          </div>
+          
+          <div 
+            className={`animate-float transition-all duration-300 ${getCardClassName('placeholder1')}`}
+            onMouseEnter={() => handleMouseEnter('placeholder1')}
+            onMouseLeave={handleMouseLeave}
+            style={{ animationDelay: '1s' }}
+          >
+            <PlaceholderCard1 isHovered={hoveredCard === 'placeholder1'} />
+          </div>
         </div>
-        <nav className="space-x-4">
-          <Link href="/admin" className="text-gray-600 hover:text-blue-600 transition-colors">
-            管理
-          </Link>
-        </nav>
-      </header>
-
-      <section>
-        <h2 className="text-2xl font-semibold mb-6">最新文章</h2>
-        <div className="space-y-4">
-          {posts.length === 0 ? (
-            <p className="text-gray-500">暂无文章</p>
-          ) : (
-            posts.map((post) => (
-              <article
-                key={post.id}
-                className="border rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer"
-              >
-                <Link href={`/posts/${post.id}`}>
-                  <h3 className="text-xl font-medium mb-2 hover:text-blue-600">{post.title}</h3>
-                  <p className="text-gray-600 mb-3">{post.excerpt}</p>
-                  <div className="flex items-center justify-between">
-                    <time className="text-sm text-gray-400">{post.publishedAt}</time>
-                    <div className="flex gap-2">
-                      {post.tags.map(tag => (
-                        <span key={tag} className="text-xs bg-gray-100 px-2 py-1 rounded">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </Link>
-              </article>
-            ))
-          )}
-        </div>
-      </section>
+      </div>
     </main>
   );
 }
