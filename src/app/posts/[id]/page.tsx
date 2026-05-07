@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import { getPostById, getAllPostIds } from '@/lib/posts';
+import CommentSection from '@/components/CommentSection';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -60,6 +61,8 @@ export default async function PostPage({ params }: PageProps) {
 
         <ReactMarkdown>{post.content}</ReactMarkdown>
       </article>
+
+      <CommentSection postId={id} />
     </main>
   );
 }
