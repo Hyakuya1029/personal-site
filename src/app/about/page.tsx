@@ -22,20 +22,20 @@ interface WebsiteTech {
 
 const websiteTechs: WebsiteTech[] = [
   {
-    name: 'Next.js 14',
-    description: '全栈 React 框架，支持服务端渲染与静态生成',
+    name: 'Next.js',
+    description: '网站的前后端框架',
   },
   {
     name: 'TypeScript',
-    description: '静态类型检查，提升开发体验与代码质量',
+    description: '类型安全的开发语言',
   },
   {
     name: 'Tailwind CSS',
-    description: '原子化 CSS 框架，快速构建响应式界面与深色模式',
+    description: '网站的样式方案',
   },
   {
     name: 'Supabase',
-    description: '开源 BaaS，提供数据库、认证与实时 API',
+    description: '数据库与后端服务',
   },
 ];
 
@@ -66,24 +66,34 @@ export default function AboutPage() {
     ? skills
     : skills.filter(s => s.category === activeCategory);
 
-  const techIconClass = (name: string) => {
+  const renderTechIcon = (name: string) => {
     switch (name) {
-      case 'Next.js 14':
-        return 'fa-solid fa-n';
+      case 'Next.js':
+        return <span className="text-sm font-extrabold">N</span>;
       case 'TypeScript':
-        return 'fa-brands fa-typescript';
+        return (
+          <span className="text-sm font-extrabold tracking-tight">TS</span>
+        );
       case 'Tailwind CSS':
-        return 'fa-brands fa-tailwind-css';
+        return (
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 6c-2.67 0-4.33 1.33-5 4 .67-1.33 1.78-1.83 3.33-1.5.72.16 1.24.69 1.82 1.28C13.1 10.73 14.18 12 16.5 12c2.67 0 4.33-1.33 5-4-.67 1.33-1.78 1.83-3.33 1.5-.72-.16-1.24-.69-1.82-1.28C15.4 7.27 14.32 6 12 6zM7.5 12c-2.67 0-4.33 1.33-5 4 .67-1.33 1.78-1.83 3.33-1.5.72.16 1.24.69 1.82 1.28C8.6 16.73 9.68 18 12 18c2.67 0 4.33-1.33 5-4-.67 1.33-1.78 1.83-3.33 1.5-.72-.16-1.24-.69-1.82-1.28C10.9 13.27 9.82 12 7.5 12z" />
+          </svg>
+        );
       case 'Supabase':
-        return 'fa-solid fa-database';
+        return (
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M13.9 2.5L5 14h5.5l-1.4 7.5L19 10h-5.5l.4-7.5z" />
+          </svg>
+        );
       default:
-        return 'fa-solid fa-code';
+        return <span className="text-sm font-bold">{name.charAt(0)}</span>;
     }
   };
 
   const techGradient = (name: string) => {
     switch (name) {
-      case 'Next.js 14':
+      case 'Next.js':
         return 'from-gray-700 to-black dark:from-gray-600 dark:to-gray-900';
       case 'TypeScript':
         return 'from-blue-500 to-blue-700';
@@ -102,7 +112,7 @@ export default function AboutPage() {
         <h1 className="text-4xl font-bold mb-4">关于</h1>
       </header>
 
-      <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 mb-8">
+      <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 md:p-8 mb-8">
         <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2 dark:text-gray-100">
           <svg className="w-6 h-6 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -117,7 +127,7 @@ export default function AboutPage() {
               className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 text-center hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors group"
             >
               <div className={`w-10 h-10 mx-auto mb-2 rounded-lg bg-gradient-to-br ${techGradient(tech.name)} flex items-center justify-center text-white shadow group-hover:shadow-md transition-shadow`}>
-                <i className={techIconClass(tech.name)} suppressHydrationWarning />
+                {renderTechIcon(tech.name)}
               </div>
               <h3 className="font-semibold text-gray-800 dark:text-gray-200 text-sm mb-1">
                 {tech.name}
@@ -129,13 +139,13 @@ export default function AboutPage() {
           ))}
         </div>
 
-        <p className="text-sm text-gray-400 dark:text-gray-500">
-          本网站通过agent代理进行全自动开发<br />
+        <p className="text-sm text-gray-500 dark:text-gray-400 leading-loose">
+          <strong className="text-gray-700 dark:text-gray-200">* 本网站通过agent代理进行全自动开发</strong><br />
           此外网站还使用了 react-markdown、gray-matter 等技术实现各种视觉效果以及网站功能
         </p>
       </section>
 
-      <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 mb-8">
+      <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 md:p-8 mb-8">
         <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2 dark:text-gray-100">
           <svg className="w-6 h-6 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
@@ -168,7 +178,7 @@ export default function AboutPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </span>
-                <span>Hyakuya@gmail.com</span>
+                <span className="break-all">hyakuya_site@qq.com</span>
               </li>
               <li className="flex items-center gap-3">
                 <span className="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center text-sky-600 dark:text-sky-400">
@@ -183,15 +193,16 @@ export default function AboutPage() {
           </div>
           <div>
             <h3 className="font-medium text-gray-800 dark:text-gray-200 mb-2">自我介绍</h3>
-            <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-              随处可见的普通开发者，跟着兴趣走，享受过程，收获结果。
+            <p className="text-gray-600 dark:text-gray-400 leading-loose">
+              一个不会敲代码、不会做项目的计算机专业废柴；<br />
+              跟着兴趣走，享受过程，随心而动，收获结果；<br />
               在这个网站里，分享自己喜欢和感兴趣的东西。
             </p>
           </div>
         </div>
       </section>
 
-      <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 mb-8">
+      <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 md:p-8 mb-8">
         <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2 dark:text-gray-100">
           <svg className="w-6 h-6 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -249,7 +260,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+      <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 md:p-8">
         <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2 dark:text-gray-100">
           <svg className="w-6 h-6 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />

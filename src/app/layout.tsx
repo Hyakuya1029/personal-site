@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import BackgroundGlow from "@/components/layout/BackgroundGlow";
 import ThemeProvider from "@/components/layout/ThemeProvider";
 
 export const metadata: Metadata = {
@@ -31,10 +32,10 @@ export default function RootLayout({
             __html: `(function(){try{var t=localStorage.getItem('theme');if(!t){t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'}document.documentElement.classList.toggle('dark',t==='dark')}catch(e){}})()`,
           }}
         />
-        <script src="https://kit.fontawesome.com/4dbcd2dd1f.js" crossOrigin="anonymous" />
       </head>
       <body className="antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors">
         <ThemeProvider>
+          <BackgroundGlow />
           <Navbar />
           <div className="flex-1">{children}</div>
           <Footer />

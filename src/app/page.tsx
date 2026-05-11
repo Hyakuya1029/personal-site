@@ -4,7 +4,9 @@ import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import AboutCard from '@/components/home/AboutCard';
 import CalendarCard from '@/components/home/CalendarCard';
 import Link from 'next/link';
-import { PlaceholderCard1, PlaceholderCard2, PlaceholderCard3, PlaceholderCard4 } from '@/components/home/PlaceholderCards';
+import PortfolioCard from '@/components/home/PortfolioCard';
+import MessagesCard from '@/components/home/MessagesCard';
+import ClockCard from '@/components/home/ClockCard';
 import { useBubblePhysics } from '@/hooks/useBubblePhysics';
 
 type CardItem = {
@@ -22,9 +24,8 @@ const CARD_COLORS: Record<string, string> = {
   about: '#6366f1',
   calendar: '#f59e0b',
   portfolio: '#3b82f6',
-  ideas: '#10b981',
-  favorites: '#ec4899',
-  placeholder1: '#94a3b8',
+  messages: '#10b981',
+  clock: '#8b5cf6',
 };
 
 export default function Home() {
@@ -59,10 +60,9 @@ export default function Home() {
     () => [
       { id: 'about',         size: 220, color: CARD_COLORS.about,         render: (h: boolean) => <AboutCard isHovered={h} /> },
       { id: 'calendar',      size: 200, color: CARD_COLORS.calendar,      render: (h: boolean) => <CalendarCard isHovered={h} /> },
-      { id: 'portfolio',     size: 140, color: CARD_COLORS.portfolio,     href: '/portfolio', render: (h: boolean) => <PlaceholderCard2 isHovered={h} /> },
-      { id: 'ideas',         size: 140, color: CARD_COLORS.ideas,         href: '/messages', render: (h: boolean) => <PlaceholderCard3 isHovered={h} /> },
-      { id: 'favorites',     size: 140, color: CARD_COLORS.favorites,     render: (h: boolean) => <PlaceholderCard4 isHovered={h} /> },
-      { id: 'placeholder1',  size: 140, color: CARD_COLORS.placeholder1,  render: (h: boolean) => <PlaceholderCard1 isHovered={h} /> },
+      { id: 'clock',         size: 160, color: CARD_COLORS.clock,         render: (h: boolean) => <ClockCard isHovered={h} /> },
+      { id: 'portfolio',     size: 140, color: CARD_COLORS.portfolio,     href: '/portfolio', render: (h: boolean) => <PortfolioCard isHovered={h} /> },
+      { id: 'messages',      size: 140, color: CARD_COLORS.messages,      href: '/messages', render: (h: boolean) => <MessagesCard isHovered={h} /> },
     ],
     [],
   );
@@ -110,14 +110,16 @@ export default function Home() {
             <span className="text-xs text-amber-600 dark:text-amber-400">💡 在电脑端访问以获得更好的交互体验</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {baseCards.map((item) => {
+            {baseCards.map((item, idx) => {
               const content = item.render(false);
               const card = <div className="w-full h-full">{content}</div>;
+              const isLast = idx === baseCards.length - 1;
+              const isOdd = baseCards.length % 2 !== 0;
 
               return (
                 <div
                   key={item.id}
-                  className="aspect-square"
+                  className={`aspect-square ${isLast && isOdd ? 'col-span-2 justify-self-center w-1/2' : ''}`}
                   onTouchStart={() => handleMouseEnter(item.id)}
                   onTouchEnd={handleMouseLeave}
                 >

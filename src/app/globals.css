@@ -141,3 +141,23 @@
   filter: none;
   opacity: 0.55;
 }
+
+/* ════════════════════════════════════════════
+   Aurora background glow — slow gentle drift
+   ════════════════════════════════════════════ */
+@keyframes aurora-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(3%, -2%) scale(1.03); }
+  66%  { transform: translate(-1%, 2%) scale(0.98); }
+}
+
+@keyframes aurora-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(-2%, 2%) scale(1.04); }
+  66%  { transform: translate(2%, -1%) scale(0.97); }
+}
+
+@keyframes aurora-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(-2%, -2%) scale(1.05); }
+}

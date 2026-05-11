@@ -45,9 +45,11 @@ export default function Navbar() {
     }`}>
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-3 md:py-4">
         <div className="flex items-center justify-between">
-          <Link href="/" className="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100 shrink-0">
-            Hyakuya's site           
-          </Link>
+          <div className="flex-1">
+            <Link href="/" className="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100">
+              Hyakuya's site
+            </Link>
+          </div>
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-8">
@@ -70,7 +72,7 @@ export default function Navbar() {
           </div>
 
           {/* Theme toggle + mobile hamburger */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-1 justify-end">
             <button
               onClick={toggle}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

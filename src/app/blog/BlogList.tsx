@@ -19,7 +19,7 @@ export default function BlogList({ posts, allTags }: BlogListProps) {
 
   return (
     <section>
-      <div className="flex flex-wrap items-center gap-2 mb-8">
+      <div className="flex flex-wrap justify-center gap-2 mb-8">
         <FilterPill
           label="全部"
           isActive={activeTag === null}
@@ -35,13 +35,13 @@ export default function BlogList({ posts, allTags }: BlogListProps) {
         ))}
       </div>
 
-      <h2 className="text-2xl font-semibold mb-6 dark:text-gray-100">
+      <h2 className="text-2xl font-semibold mb-6 dark:text-gray-100 text-center">
         {activeTag ? `标签: ${activeTag}` : '最新文章'}
       </h2>
 
       <div className="space-y-4">
         {filtered.length === 0 ? (
-          <p className="text-gray-500 dark:text-gray-400">暂无文章</p>
+          <p className="text-gray-500 dark:text-gray-400 text-center">暂无文章</p>
         ) : (
           filtered.map((post, i) => (
             <article

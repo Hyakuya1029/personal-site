@@ -19,7 +19,7 @@ export default function Card({
         bg-white dark:bg-gray-800 shadow-lg border border-white/70 dark:border-gray-700/50
         transition-all duration-400 ease-out
         cursor-pointer
-        flex flex-col items-center justify-center p-5
+        flex flex-col items-center justify-center p-3 sm:p-5
         overflow-hidden
         ${isHovered
           ? 'ring-2 ring-sky-400/40 shadow-2xl'

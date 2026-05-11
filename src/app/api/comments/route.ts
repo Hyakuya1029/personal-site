@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getGeoInfo, getClientIP, getQueryIP } from '@/lib/geo';
+import { sendNotification } from '@/lib/notify';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,6 +30,16 @@ export async function POST(request: Request) {
       });
 
     if (error) throw error;
+
+    sendNotification({
+      type: 'comment',
+      name: body.name,
+      content: body.content,
+      email: body.email,
+      postId: body.post_id,
+      country: geoInfo.country,
+      region: geoInfo.region,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

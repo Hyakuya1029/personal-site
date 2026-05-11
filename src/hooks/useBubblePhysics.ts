@@ -42,6 +42,9 @@ const BUOYANCY_BASE = 0.0025;
 const DAMPING_INITIAL = 0.986;   // quick settling during bloom
 const DAMPING_NORMAL = 0.9975;   // very gentle float after settled
 const SETTLE_PERIOD = 200;       // frames (~3.3 s @ 60 fps)
+const FREEZE_DELAY = 150;        // frames idle before freezing (~2.5 s)
+const FREEZE_RAMP = 80;          // frames to ease into full freeze (~1.3 s)
+const FREEZE_DAMPING = 0.82;     // strong damping to halt movement
 const CENTER_STRENGTH = 0.0005;
 const COLLISION_RESTITUTION = 0.18;
 const HOVER_REPULSION = 0.45;
@@ -65,6 +68,7 @@ export function useBubblePhysics(
   const timeRef = useRef<number>(0);
   const hoveredRef = useRef<string | null>(hoveredId);
   hoveredRef.current = hoveredId;
+  const idleFramesRef = useRef<number>(0);
 
   const [connections, setConnections] = useState<Connection[]>([]);
   const [particles, setParticles] = useState<Particle[]>([]);
@@ -134,11 +138,23 @@ export function useBubblePhysics(
       const cx = containerWidth / 2;
       const cy = containerHeight / 2;
 
-      // time-based damping — stronger at first, then relaxed
+      // ── idle / freeze tracking ──
+      if (hovered) {
+        idleFramesRef.current = 0;
+      } else {
+        idleFramesRef.current += 1;
+      }
       const settled = timeRef.current > SETTLE_PERIOD;
-      const damping = settled ? DAMPING_NORMAL : DAMPING_INITIAL;
-      // gradually reduce noise while settling
-      const noiseScale = settled ? 1 : Math.min(1, timeRef.current / SETTLE_PERIOD);
+      const idleFrames = idleFramesRef.current;
+      const freezing = settled && idleFrames > FREEZE_DELAY;
+      // ease from DAMPING_NORMAL → FREEZE_DAMPING over FREEZE_RAMP frames
+      const rampT = freezing ? Math.min(1, (idleFrames - FREEZE_DELAY) / FREEZE_RAMP) : 0;
+      const damping = settled
+        ? DAMPING_NORMAL + (FREEZE_DAMPING - DAMPING_NORMAL) * rampT
+        : DAMPING_INITIAL;
+      // noise fades out during freeze ramp
+      const baseNoise = settled ? 1 : Math.min(1, timeRef.current / SETTLE_PERIOD);
+      const noiseScale = baseNoise * (1 - rampT);
 
       // ── scale targets ──
       arr.forEach((b) => {
@@ -158,35 +174,37 @@ export function useBubblePhysics(
 
       // ── forces ──
       arr.forEach((b) => {
-        b.vy -= BUOYANCY_BASE * (b.baseRadius / 200) * dt;
-        b.vy += GRAVITY * dt;
-        b.vx += (cx - b.x) * CENTER_STRENGTH * dt;
-        b.vy += (cy - b.y) * CENTER_STRENGTH * dt;
+        if (!freezing) {
+          b.vy -= BUOYANCY_BASE * (b.baseRadius / 200) * dt;
+          b.vy += GRAVITY * dt;
+          b.vx += (cx - b.x) * CENTER_STRENGTH * dt;
+          b.vy += (cy - b.y) * CENTER_STRENGTH * dt;
 
-        // organic noise — very subtle once settled
-        const t = timeRef.current * 0.018;
-        const seed = b.id.charCodeAt(0) + b.id.charCodeAt(b.id.length - 1);
-        b.vx += Math.sin(t * 0.71 + seed) * Math.cos(t * 0.53 + seed * 0.6) * NOISE_STRENGTH * noiseScale * dt;
-        b.vy += Math.cos(t * 0.63 + seed * 0.8) * Math.sin(t * 0.77 + seed) * NOISE_STRENGTH * noiseScale * dt;
+          // organic noise — very subtle once settled
+          const t = timeRef.current * 0.018;
+          const seed = b.id.charCodeAt(0) + b.id.charCodeAt(b.id.length - 1);
+          b.vx += Math.sin(t * 0.71 + seed) * Math.cos(t * 0.53 + seed * 0.6) * NOISE_STRENGTH * noiseScale * dt;
+          b.vy += Math.cos(t * 0.63 + seed * 0.8) * Math.sin(t * 0.77 + seed) * NOISE_STRENGTH * noiseScale * dt;
 
-        // hover repulsion
-        if (hState && b.id !== hovered) {
-          const dx = b.x - hState.x;
-          const dy = b.y - hState.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < HOVER_INFLUENCE && dist > 1) {
-            const f = (HOVER_REPULSION * 120) / (dist * dist);
-            b.vx += (dx / dist) * f * dt;
-            b.vy += (dy / dist) * f * dt;
+          // hover repulsion
+          if (hState && b.id !== hovered) {
+            const dx = b.x - hState.x;
+            const dy = b.y - hState.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < HOVER_INFLUENCE && dist > 1) {
+              const f = (HOVER_REPULSION * 120) / (dist * dist);
+              b.vx += (dx / dist) * f * dt;
+              b.vy += (dy / dist) * f * dt;
+            }
           }
-        }
 
-        // soft boundary
-        const m = b.baseRadius * 0.75;
-        if (b.x < m) b.vx += BOUNDARY_STIFFNESS * dt;
-        if (b.x > containerWidth - m) b.vx -= BOUNDARY_STIFFNESS * dt;
-        if (b.y < m) b.vy += BOUNDARY_STIFFNESS * dt;
-        if (b.y > containerHeight - m) b.vy -= BOUNDARY_STIFFNESS * dt;
+          // soft boundary
+          const m = b.baseRadius * 0.75;
+          if (b.x < m) b.vx += BOUNDARY_STIFFNESS * dt;
+          if (b.x > containerWidth - m) b.vx -= BOUNDARY_STIFFNESS * dt;
+          if (b.y < m) b.vy += BOUNDARY_STIFFNESS * dt;
+          if (b.y > containerHeight - m) b.vy -= BOUNDARY_STIFFNESS * dt;
+        }
 
         // damping
         b.vx *= damping;

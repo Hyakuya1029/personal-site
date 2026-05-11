@@ -8,7 +8,13 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      animation: {
+        'aurora-1': 'aurora-1 22s ease-in-out infinite',
+        'aurora-2': 'aurora-2 26s ease-in-out infinite',
+        'aurora-3': 'aurora-3 20s ease-in-out infinite',
+      },
+    },
   },
   plugins: [typography],
 };
