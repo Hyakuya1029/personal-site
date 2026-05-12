@@ -31,7 +31,7 @@ export function getClientIP(request: Request): string {
 
 export function getQueryIP(ip: string, env: string): string {
   if (env === 'development' || ip === '::1' || ip === '127.0.0.1' || ip === 'unknown') {
-    return '118.140.0.1';
+    return '118.140.0.1';//本地测试IP
   }
   return ip;
 }

@@ -14,21 +14,29 @@ const transporter = qqEmail && qqPass
   : null;
 
 interface NotifyPayload {
-  type: 'comment' | 'message';
+  type: 'comment' | 'message' | 'friend_application';
   name: string;
   content: string;
   email?: string;
   postId?: string;
+  url?: string;
+  tags?: string[];
   country?: string;
   region?: string;
 }
 
+const typeLabel: Record<NotifyPayload['type'], string> = {
+  comment: '评论',
+  message: '留言',
+  friend_application: '友链申请',
+};
+
 export async function sendNotification(payload: NotifyPayload) {
   if (!transporter || !notifyEmail) return;
 
-  const { type, name, content, email, postId, country, region } = payload;
+  const { type, name, content, email, postId, url, tags, country, region } = payload;
 
-  const label = type === 'comment' ? '评论' : '留言';
+  const label = typeLabel[type];
   const location = [country, region].filter(Boolean).join(' ');
 
   const subject = `[个人站点] 新${label}来自 ${name}`;
@@ -36,6 +44,8 @@ export async function sendNotification(payload: NotifyPayload) {
     `类型：${label}`,
     `昵称：${name}`,
     email && `邮箱：${email}`,
+    url && `链接：${url}`,
+    tags && tags.length > 0 && `标签：${tags.join(' / ')}`,
     type === 'comment' && postId && `文章：${postId}`,
     `内容：${content}`,
     location && `位置：${location}`,

@@ -2,25 +2,48 @@
 
 import { useState, useEffect } from 'react';
 import Card from './Card';
+import { supabase } from '@/lib/supabase';
 
 interface AboutCardProps {
   isHovered?: boolean;
 }
 
 function getGreeting(hour: number): string {
-  if (hour >= 6 && hour < 8) return '早上好，新的一天开始了';
-  if (hour >= 8 && hour < 12) return '上午好，早起努力真勤奋';
-  if (hour >= 12 && hour < 14) return '中午好，记得按时吃饭';
-  if (hour >= 14 && hour < 18) return '下午好，效率最高的时候';
-  if (hour >= 18 && hour < 24) return '晚上好，享受自由的时光';
+  if (hour >= 6 && hour < 11) return '早安，又是新一天';
+  if (hour >= 11 && hour < 14) return '午安，记得按时吃饭';
+  if (hour >= 14 && hour < 18) return '下午好，保持开心哦';
+  if (hour >= 18 && hour < 24) return '晚上好，一天过了呢';
   return '夜深了，早点休息哦';
+}
+
+function timeAgo(date: Date): string {
+  const diff = Date.now() - date.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return '刚刚';
+  if (mins < 60) return `${mins} 分钟前`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} 小时前`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} 天前`;
+  return `${Math.floor(days / 30)} 个月前`;
 }
 
 export default function AboutCard({ isHovered = false }: AboutCardProps) {
   const [greeting, setGreeting] = useState<string>('');
+  const [lastActive, setLastActive] = useState<string>('');
 
   useEffect(() => {
     setGreeting(getGreeting(new Date().getHours()));
+
+    Promise.all([
+      supabase.from('comments').select('created_at').order('created_at', { ascending: false }).limit(1).maybeSingle(),
+      supabase.from('messages').select('created_at').order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    ]).then(([c, m]) => {
+      const times = [c.data?.created_at, m.data?.created_at].filter(Boolean).map(t => new Date(t));
+      if (times.length > 0) {
+        setLastActive(timeAgo(new Date(Math.max(...times.map(t => t.getTime())))));
+      }
+    });
   }, []);
 
   return (
@@ -36,6 +59,11 @@ export default function AboutCard({ isHovered = false }: AboutCardProps) {
         <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed min-h-[1rem]">
           {greeting || '欢迎来到我的网站'}
         </p>
+        {lastActive && (
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2">
+            站点动态 · {lastActive}
+          </p>
+        )}
       </div>
     </Card>
   );

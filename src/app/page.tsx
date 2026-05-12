@@ -7,6 +7,7 @@ import Link from 'next/link';
 import PortfolioCard from '@/components/home/PortfolioCard';
 import MessagesCard from '@/components/home/MessagesCard';
 import ClockCard from '@/components/home/ClockCard';
+import AnnouncementCard from '@/components/home/AnnouncementCard';
 import { useBubblePhysics } from '@/hooks/useBubblePhysics';
 
 type CardItem = {
@@ -25,7 +26,8 @@ const CARD_COLORS: Record<string, string> = {
   calendar: '#f59e0b',
   portfolio: '#3b82f6',
   messages: '#10b981',
-  clock: '#8b5cf6',
+  clock: '#06b6d4',
+  announcement: '#f43f5e',
 };
 
 export default function Home() {
@@ -61,6 +63,7 @@ export default function Home() {
       { id: 'about',         size: 220, color: CARD_COLORS.about,         render: (h: boolean) => <AboutCard isHovered={h} /> },
       { id: 'calendar',      size: 200, color: CARD_COLORS.calendar,      render: (h: boolean) => <CalendarCard isHovered={h} /> },
       { id: 'clock',         size: 160, color: CARD_COLORS.clock,         render: (h: boolean) => <ClockCard isHovered={h} /> },
+      { id: 'announcement', size: 170, color: CARD_COLORS.announcement, render: (h: boolean) => <AnnouncementCard isHovered={h} /> },
       { id: 'portfolio',     size: 140, color: CARD_COLORS.portfolio,     href: '/portfolio', render: (h: boolean) => <PortfolioCard isHovered={h} /> },
       { id: 'messages',      size: 140, color: CARD_COLORS.messages,      href: '/messages', render: (h: boolean) => <MessagesCard isHovered={h} /> },
     ],

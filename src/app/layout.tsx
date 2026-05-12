@@ -4,6 +4,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import BackgroundGlow from "@/components/layout/BackgroundGlow";
 import ThemeProvider from "@/components/layout/ThemeProvider";
+import AnnouncementBar from "@/components/layout/AnnouncementBar";
 
 export const metadata: Metadata = {
   title: {
@@ -37,6 +38,7 @@ export default function RootLayout({
         <ThemeProvider>
           <BackgroundGlow />
           <Navbar />
+          <AnnouncementBar />
           <div className="flex-1">{children}</div>
           <Footer />
         </ThemeProvider>

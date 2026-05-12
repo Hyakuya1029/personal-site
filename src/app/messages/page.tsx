@@ -134,7 +134,7 @@ export default function MessagesPage() {
           </div>
           <div>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="(选填)如果希望我联系您，请填入你的邮箱"
