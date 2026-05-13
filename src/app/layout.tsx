@@ -5,6 +5,8 @@ import Footer from "@/components/layout/Footer";
 import BackgroundGlow from "@/components/layout/BackgroundGlow";
 import ThemeProvider from "@/components/layout/ThemeProvider";
 import AnnouncementBar from "@/components/layout/AnnouncementBar";
+import MusicProvider from "@/components/layout/MusicProvider";
+import MusicFloating from "@/components/layout/MusicFloating";
 
 export const metadata: Metadata = {
   title: {
@@ -36,11 +38,14 @@ export default function RootLayout({
       </head>
       <body className="antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors">
         <ThemeProvider>
-          <BackgroundGlow />
-          <Navbar />
-          <AnnouncementBar />
-          <div className="flex-1">{children}</div>
-          <Footer />
+          <MusicProvider>
+            <BackgroundGlow />
+            <Navbar />
+            <AnnouncementBar />
+            <div className="flex-1">{children}</div>
+            <Footer />
+            <MusicFloating />
+          </MusicProvider>
         </ThemeProvider>
       </body>
     </html>

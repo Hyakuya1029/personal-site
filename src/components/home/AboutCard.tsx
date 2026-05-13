@@ -12,7 +12,7 @@ function getGreeting(hour: number): string {
   if (hour >= 6 && hour < 11) return '早安，又是新一天';
   if (hour >= 11 && hour < 14) return '午安，记得按时吃饭';
   if (hour >= 14 && hour < 18) return '下午好，保持开心哦';
-  if (hour >= 18 && hour < 24) return '晚上好，一天过了呢';
+  if (hour >= 18 && hour < 24) return '晚上好，一天快过了呢';
   return '夜深了，早点休息哦';
 }
 
