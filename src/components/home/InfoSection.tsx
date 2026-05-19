@@ -102,7 +102,7 @@ export default function InfoSection() {
           </div>
         </div>
 
-        {/* 右栏 — 文章 + 标签云 */}
+        {/* 右栏 — 最近文章 */}
         <div className="flex-1 space-y-10">
           {/* 最近文章 */}
           <div>
@@ -111,7 +111,7 @@ export default function InfoSection() {
               最近文章
             </h2>
             {posts.length === 0 ? (
-              <p className="text-gray-400 dark:text-gray-500 text-sm">暂无文章</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm">还没有文章</p>
             ) : (
               <div className="space-y-4">
                 {posts.slice(0, 5).map(post => (

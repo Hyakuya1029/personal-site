@@ -9,6 +9,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"LXGW WenKai"', '"PingFang SC"', '"Microsoft YaHei"', 'sans-serif'],
+      },
       animation: {
         'aurora-1': 'aurora-1 22s ease-in-out infinite',
         'aurora-2': 'aurora-2 26s ease-in-out infinite',

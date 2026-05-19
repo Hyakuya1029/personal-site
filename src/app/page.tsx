@@ -124,6 +124,7 @@ export default function Home() {
   // ════════════════════════════════════════════
   if (isMobile) {
     return (
+      <>
       <main className="min-h-screen p-4">
         <div className="max-w-lg mx-auto">
           <div className="mb-4 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-center">
@@ -156,6 +157,8 @@ export default function Home() {
           </div>
         </div>
       </main>
+      <InfoSection />
+      </>
     );
   }
 

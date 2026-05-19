@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   },
   description: '开发者 Hyakuya 的个人网站 — 记录学习、生活与技术分享',
   authors: [{ name: 'Hyakuya' }],
+  icons: {
+    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+  },
   openGraph: {
     type: 'website',
     locale: 'zh_CN',

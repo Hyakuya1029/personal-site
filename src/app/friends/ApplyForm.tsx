@@ -91,8 +91,9 @@ export default function ApplyForm() {
                   <span className="text-red-500">*</span> 为必填项<br />
                   网站链接：以「https://」开头<br />
                   网站描述：精简随意即可<br />
-                  头像链接：可联系我提供帮助，留空使用默认图标<br />
-                  标签：多个标签用逗号分隔
+                  头像链接：图片链接，留空使用默认图标<br />
+                  标签：多个标签用逗号分隔<br />
+                  以上出现任何困难都可联系我寻求帮助~
                 </p>
                 <div>
                   <label className="text-sm text-gray-600 dark:text-gray-400 mb-1 block">

@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@callmebill/lxgw-wenkai-web": "^1.522.0",
     "@supabase/supabase-js": "^2.105.3",
     "@tailwindcss/typography": "^0.5.19",
     "@vercel/analytics": "^2.0.1",

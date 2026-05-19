@@ -63,9 +63,6 @@ export default function PortfolioPage() {
         <p className="text-gray-600 dark:text-gray-400">展示我的项目作品和技术成果</p>
       </header>
       <ProjectList projects={projects} categories={categories} />
-      <div className="mt-12 text-center">
-        <p className="text-gray-400 dark:text-gray-500 text-sm">更多项目正在开发中...</p>
-      </div>
     </main>
   );
 }
