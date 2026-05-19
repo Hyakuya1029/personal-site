@@ -39,6 +39,10 @@ export default function RootLayout({
             __html: `(function(){try{var t=localStorage.getItem('theme');if(!t){t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'}document.documentElement.classList.toggle('dark',t==='dark')}catch(e){}})()`,
           }}
         />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@callmebill/lxgw-wenkai-web@1.522.0/style.css"
+        />
       </head>
       <body className="antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors">
         <ThemeProvider>
