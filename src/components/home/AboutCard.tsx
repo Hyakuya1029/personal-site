@@ -12,18 +12,21 @@ function getGreeting(hour: number): string {
   if (hour >= 6 && hour < 11) return '上午好';
   if (hour >= 11 && hour < 14) return '中午好';
   if (hour >= 14 && hour < 18) return '下午好';
-  if (hour >= 18 && hour < 23) return '晚上好';
+  if (hour >= 18 && hour < 24) return '晚上好';
   return '夜深了，早点休息';
 }
 
 function timeAgo(date: Date): string {
-  const diff = Date.now() - date.getTime();
-  const mins = Math.floor(diff / 60000);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const mins = Math.floor(diffMs / 60000);
   if (mins < 1) return '刚刚';
   if (mins < 60) return `${mins} 分钟前`;
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours} 小时前`;
-  const days = Math.floor(hours / 24);
+  const nowDate = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const targetDate = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const days = Math.floor((nowDate - targetDate) / 86400000);
   if (days < 30) return `${days} 天前`;
   return `${Math.floor(days / 30)} 个月前`;
 }
@@ -38,8 +41,9 @@ export default function AboutCard({ isHovered = false }: AboutCardProps) {
     Promise.all([
       supabase.from('comments').select('created_at').order('created_at', { ascending: false }).limit(1).maybeSingle(),
       supabase.from('messages').select('created_at').order('created_at', { ascending: false }).limit(1).maybeSingle(),
-    ]).then(([c, m]) => {
-      const times = [c.data?.created_at, m.data?.created_at].filter(Boolean).map(t => new Date(t));
+      supabase.from('status_posts').select('created_at').order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    ]).then(([c, m, s]) => {
+      const times = [c.data?.created_at, m.data?.created_at, s.data?.created_at].filter(Boolean).map(t => new Date(t));
       if (times.length > 0) {
         setLastActive(timeAgo(new Date(Math.max(...times.map(t => t.getTime())))));
       }

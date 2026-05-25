@@ -1,31 +1,56 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
-interface Post {
-  id: string;
-  title: string;
-  excerpt: string;
-  publishedAt: string;
-  tags: string[];
+interface Status {
+  id: number;
+  content: string;
+  created_at: string;
+}
+
+function relativeTime(dateStr: string) {
+  const now = new Date();
+  const created = new Date(dateStr);
+  const diffMs = now.getTime() - created.getTime();
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return '刚刚';
+  if (minutes < 60) return `${minutes} 分钟前`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} 小时前`;
+  // 按日历日期算天，不是按 24 小时整除
+  const nowDate = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const createdDate = Date.UTC(created.getFullYear(), created.getMonth(), created.getDate());
+  const days = Math.floor((nowDate - createdDate) / 86400000);
+  if (days < 30) return `${days} 天前`;
+  return `${created.getMonth() + 1}月${created.getDate()}日`;
 }
 
 export default function InfoSection() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [statuses, setStatuses] = useState<Status[]>([]);
   const [stats, setStats] = useState({ posts: 0, comments: 0, messages: 0, friends: 0 });
+  const [showPost, setShowPost] = useState(false);
+  const [postEmail, setPostEmail] = useState('');
+  const [postContent, setPostContent] = useState('');
+  const [isPosting, setIsPosting] = useState(false);
+
+  const fetchStatuses = () => {
+    fetch('/api/status')
+      .then(r => r.json())
+      .then(d => { if (d.success) setStatuses(d.data); })
+      .catch(() => {});
+  };
 
   useEffect(() => {
+    fetchStatuses();
+
     fetch('/api/posts')
       .then(r => r.json())
-      .then((data: Post[]) => {
-        setPosts(data);
-        setStats(prev => ({ ...prev, posts: data.length }));
-      })
+      .then((data: any[]) => setStats(prev => ({ ...prev, posts: data.length })))
       .catch(() => {});
 
-    // Supabase 统计
+    setPostEmail(localStorage.getItem('owner_email') || '');
+
     Promise.all([
       supabase.from('comments').select('id', { count: 'exact', head: true }),
       supabase.from('messages').select('id', { count: 'exact', head: true }),
@@ -39,6 +64,28 @@ export default function InfoSection() {
       }));
     }).catch(() => {});
   }, []);
+
+  const handlePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!postEmail.trim() || !postContent.trim()) return;
+    setIsPosting(true);
+    try {
+      localStorage.setItem('owner_email', postEmail.trim());
+      const res = await fetch('/api/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: postEmail.trim(), content: postContent.trim() }),
+      });
+      const data = await res.json();
+      if (!data.success) { alert(data.error || '发布失败'); return; }
+      setPostContent('');
+      setShowPost(false);
+      fetchStatuses();
+    } catch {
+      alert('发布失败');
+    }
+    setIsPosting(false);
+  };
 
   return (
     <section className="relative bg-white dark:bg-gray-900 pt-20 pb-32 px-4">
@@ -88,6 +135,7 @@ export default function InfoSection() {
             <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">站点统计</h4>
             <div className="grid grid-cols-2 gap-3">
               {[
+                { label: '动态', value: statuses.length },
                 { label: '文章', value: stats.posts },
                 { label: '评论', value: stats.comments },
                 { label: '留言', value: stats.messages },
@@ -102,35 +150,65 @@ export default function InfoSection() {
           </div>
         </div>
 
-        {/* 右栏 — 最近文章 */}
+        {/* 右栏 — 最近动态 */}
         <div className="flex-1 space-y-10">
-          {/* 最近文章 */}
           <div>
-            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-6 flex items-center gap-2">
-              <svg className="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
-              最近文章
-            </h2>
-            {posts.length === 0 ? (
-              <p className="text-gray-400 dark:text-gray-500 text-sm">还没有文章</p>
-            ) : (
-              <div className="space-y-4">
-                {posts.slice(0, 5).map(post => (
-                  <Link key={post.id} href={`/blog/${post.id}`}
-                    className="block group bg-gray-50 dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                <svg className="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                最近动态
+              </h2>
+              <button
+                onClick={() => setShowPost(!showPost)}
+                className="text-sm text-sky-600 hover:text-sky-800 dark:text-sky-400 dark:hover:text-sky-300 transition-colors"
+              >
+                {showPost ? '收起' : '+ 发动态'}
+              </button>
+            </div>
+
+            {/* 发布表单（仅自己可见 — 邮箱需匹配） */}
+            {showPost && (
+              <form onSubmit={handlePost} className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                <input
+                  type="text"
+                  value={postEmail}
+                  onChange={e => setPostEmail(e.target.value)}
+                  placeholder="验证邮箱（站长标识）"
+                  className="w-full px-3 py-2 mb-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-sky-500 outline-none"
+                />
+                <textarea
+                  value={postContent}
+                  onChange={e => setPostContent(e.target.value)}
+                  placeholder="说点什么..."
+                  rows={2}
+                  maxLength={280}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-sky-500 outline-none resize-none"
+                />
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-gray-400">{postContent.length}/280</span>
+                  <button
+                    type="submit"
+                    disabled={isPosting || !postEmail.trim() || !postContent.trim()}
+                    className="px-4 py-1.5 bg-sky-600 text-white text-sm rounded-lg hover:bg-sky-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 transition"
                   >
-                    <h3 className="font-medium text-gray-800 dark:text-gray-200 mb-1 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
-                      {post.title}
-                    </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">{post.excerpt}</p>
-                    <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
-                      <span>{post.publishedAt}</span>
-                      <div className="flex gap-1">
-                        {post.tags.map(tag => (
-                          <span key={tag} className="bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded text-[10px]">{tag}</span>
-                        ))}
-                      </div>
-                    </div>
-                  </Link>
+                    {isPosting ? '发布中...' : '发布'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* 动态列表 */}
+            {statuses.length === 0 ? (
+              <p className="text-gray-400 dark:text-gray-500 text-sm">暂无动态</p>
+            ) : (
+              <div className="space-y-3">
+                {statuses.map(s => (
+                  <div key={s.id}
+                    className="bg-gray-50 dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700"
+                  >
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{s.content}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{relativeTime(s.created_at)}</p>
+                  </div>
                 ))}
               </div>
             )}

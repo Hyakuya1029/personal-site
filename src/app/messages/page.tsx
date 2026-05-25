@@ -3,10 +3,20 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getLocationText } from '@/lib/getLocationText';
+import { isOwnerEmail } from '@/lib/owner';
+
+function OwnerBadge() {
+  return (
+    <span className="text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded font-medium">
+      站长
+    </span>
+  );
+}
 
 interface Message {
   id: number;
   name: string;
+  email: string;
   content: string;
   country: string;
   region: string;
@@ -49,10 +59,24 @@ export default function MessagesPage() {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [ownerIds, setOwnerIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     fetchMessages();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function check() {
+      const ids = new Set<number>();
+      for (const m of messages) {
+        if (m.email && await isOwnerEmail(m.email)) ids.add(m.id);
+      }
+      if (!cancelled) setOwnerIds(ids);
+    }
+    check();
+    return () => { cancelled = true; };
+  }, [messages]);
 
   const fetchMessages = async () => {
     setIsLoading(true);
@@ -123,6 +147,9 @@ export default function MessagesPage() {
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              昵称 <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               value={name}
@@ -133,15 +160,21 @@ export default function MessagesPage() {
             />
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              邮箱
+            </label>
             <input
               type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="(选填)如果希望我联系您，请填入你的邮箱"
+              placeholder="选填，如果希望我联系您"
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition-all text-sm"
             />
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              内容 <span className="text-red-500">*</span>
+            </label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -206,6 +239,7 @@ export default function MessagesPage() {
                   <div className="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
                     <span className="font-medium text-gray-500 dark:text-gray-400">
                       — {msg.name}
+                      {ownerIds.has(msg.id) && <> <OwnerBadge /></>}
                       {location && (
                         <span className="ml-1 text-green-600 text-[10px]">来自 {location}</span>
                       )}

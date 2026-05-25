@@ -3,6 +3,15 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getLocationText } from '@/lib/getLocationText';
+import { isOwnerEmail } from '@/lib/owner';
+
+function OwnerBadge() {
+  return (
+    <span className="text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded font-medium">
+      站长
+    </span>
+  );
+}
 
 interface Comment {
   id: string;
@@ -31,10 +40,24 @@ export default function CommentSection({ postId }: CommentSectionProps) {
   const [replyContent, setReplyContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [ownerIds, setOwnerIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchComments();
   }, [postId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function check() {
+      const ids = new Set<string>();
+      for (const c of comments) {
+        if (c.email && await isOwnerEmail(c.email)) ids.add(c.id);
+      }
+      if (!cancelled) setOwnerIds(ids);
+    }
+    check();
+    return () => { cancelled = true; };
+  }, [comments]);
 
   const fetchComments = async () => {
     setIsLoading(true);
@@ -200,30 +223,45 @@ export default function CommentSection({ postId }: CommentSectionProps) {
           )}
           <form onSubmit={(e) => handleSubmit(e, true)} className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <input
-                type="text"
-                value={replyName}
-                onChange={(e) => setReplyName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition"
-                placeholder="你的姓名 *"
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  姓名 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={replyName}
+                  onChange={(e) => setReplyName(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition"
+                  placeholder="请输入姓名"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  邮箱
+                </label>
+                <input
+                  type="text"
+                  value={replyEmail}
+                  onChange={(e) => setReplyEmail(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition"
+                  placeholder="选填"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                回复内容 <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition resize-none"
+                placeholder={`回复 @${replyTo.name}...`}
                 required
               />
-              <input
-                type="text"
-                value={replyEmail}
-                onChange={(e) => setReplyEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition"
-                placeholder="你的邮箱（选填）"
-              />
             </div>
-            <textarea
-              value={replyContent}
-              onChange={(e) => setReplyContent(e.target.value)}
-              rows={3}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition resize-none"
-              placeholder={`回复 @${replyTo.name}...`}
-              required
-            />
             <button
               type="submit"
               disabled={isSubmitting}
@@ -241,7 +279,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                姓名 *
+                姓名 <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -260,13 +298,13 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition"
-                placeholder="(选填)如果希望我联系您，请填入你的邮箱"
+                placeholder="选填，如果希望我联系您"
               />
             </div>
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              评论内容 *
+              评论内容 <span className="text-red-500">*</span>
             </label>
             <textarea
               value={content}
@@ -308,6 +346,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="font-semibold text-gray-800 dark:text-gray-200">{comment.name}</h4>
+                      {ownerIds.has(comment.id) && <OwnerBadge />}
                       {getLocationText(comment.country, comment.region) && (
                         <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
                            来自 {getLocationText(comment.country, comment.region)}
@@ -338,6 +377,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <h4 className="font-semibold text-gray-800 dark:text-gray-200 text-sm">{reply.name}</h4>
+                            {ownerIds.has(reply.id) && <OwnerBadge />}
                             {getLocationText(reply.country, reply.region) && (
                               <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
                                 来自 {getLocationText(reply.country, reply.region)}
