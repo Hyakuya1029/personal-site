@@ -13,6 +13,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { name: '首页', href: '/' },
   { name: '博客', href: '/blog' },
+  { name: '资源', href: '/resources' },
   { name: '留言', href: '/messages' },
   { name: '作品', href: '/portfolio' },
   { name: '友链', href: '/friends' },

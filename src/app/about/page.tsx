@@ -34,7 +34,10 @@ export default function AboutPage() {
   return (
     <main className="min-h-screen p-4 md:p-8 max-w-3xl mx-auto">
       <header className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">关于</h1>
+        <h1 className="text-4xl font-bold mb-4">关于网站</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          *本网站通过 AI Agent 全自动开发
+        </p>
       </header>
 
       {/* ════════════════════════════════════════════
@@ -100,10 +103,6 @@ export default function AboutPage() {
           </svg>
           技术栈
         </h2>
-
-        <p className="text-sm text-gray-600 dark:text-gray-400 leading-loose mb-6">
-          <strong className="text-gray-800 dark:text-gray-200">本网站通过 AI Agent 全自动开发。</strong>
-        </p>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {websiteTechs.map((tech) => (

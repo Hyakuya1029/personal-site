@@ -18,7 +18,6 @@ function relativeTime(dateStr: string) {
   if (minutes < 60) return `${minutes} 分钟前`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours} 小时前`;
-  // 按日历日期算天，不是按 24 小时整除
   const nowDate = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
   const createdDate = Date.UTC(created.getFullYear(), created.getMonth(), created.getDate());
   const days = Math.floor((nowDate - createdDate) / 86400000);
@@ -29,27 +28,17 @@ function relativeTime(dateStr: string) {
 export default function InfoSection() {
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [stats, setStats] = useState({ posts: 0, comments: 0, messages: 0, friends: 0 });
-  const [showPost, setShowPost] = useState(false);
-  const [postEmail, setPostEmail] = useState('');
-  const [postContent, setPostContent] = useState('');
-  const [isPosting, setIsPosting] = useState(false);
 
-  const fetchStatuses = () => {
+  useEffect(() => {
     fetch('/api/status')
       .then(r => r.json())
       .then(d => { if (d.success) setStatuses(d.data); })
       .catch(() => {});
-  };
-
-  useEffect(() => {
-    fetchStatuses();
 
     fetch('/api/posts')
       .then(r => r.json())
       .then((data: any[]) => setStats(prev => ({ ...prev, posts: data.length })))
       .catch(() => {});
-
-    setPostEmail(localStorage.getItem('owner_email') || '');
 
     Promise.all([
       supabase.from('comments').select('id', { count: 'exact', head: true }),
@@ -64,28 +53,6 @@ export default function InfoSection() {
       }));
     }).catch(() => {});
   }, []);
-
-  const handlePost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!postEmail.trim() || !postContent.trim()) return;
-    setIsPosting(true);
-    try {
-      localStorage.setItem('owner_email', postEmail.trim());
-      const res = await fetch('/api/status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: postEmail.trim(), content: postContent.trim() }),
-      });
-      const data = await res.json();
-      if (!data.success) { alert(data.error || '发布失败'); return; }
-      setPostContent('');
-      setShowPost(false);
-      fetchStatuses();
-    } catch {
-      alert('发布失败');
-    }
-    setIsPosting(false);
-  };
 
   return (
     <section className="relative bg-white dark:bg-gray-900 pt-20 pb-32 px-4">
@@ -104,7 +71,7 @@ export default function InfoSection() {
               </div>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-              个人网站，分享自己喜欢和感兴趣的东西。有任何问题或者想法随时联系我~
+              个人网站，分享自己喜欢和感兴趣的东西。有任何问题随时联系我~
             </p>
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-3 space-y-1">
               <p className="flex items-center gap-1.5">
@@ -117,10 +84,10 @@ export default function InfoSection() {
               </p>
             </div>
             <div className="flex gap-3 mt-3">
-              <a href="https://github.com/Hyakuya1029" target="_blank" rel="noopener noreferrer"
+              <a href="https://github.com/Hyakuya1029/personal-site/issues" target="_blank" rel="noopener noreferrer"
                 className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors flex items-center gap-1">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.689 1.028 2.688 0 3.847-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd"/></svg>
-                GitHub
+                Issues 
               </a>
               <a href="/messages"
                 className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors flex items-center gap-1">
@@ -158,44 +125,7 @@ export default function InfoSection() {
                 <svg className="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 最近动态
               </h2>
-              <button
-                onClick={() => setShowPost(!showPost)}
-                className="text-sm text-sky-600 hover:text-sky-800 dark:text-sky-400 dark:hover:text-sky-300 transition-colors"
-              >
-                {showPost ? '收起' : '+ 发动态'}
-              </button>
             </div>
-
-            {/* 发布表单（仅自己可见 — 邮箱需匹配） */}
-            {showPost && (
-              <form onSubmit={handlePost} className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                <input
-                  type="text"
-                  value={postEmail}
-                  onChange={e => setPostEmail(e.target.value)}
-                  placeholder="验证邮箱（站长标识）"
-                  className="w-full px-3 py-2 mb-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-sky-500 outline-none"
-                />
-                <textarea
-                  value={postContent}
-                  onChange={e => setPostContent(e.target.value)}
-                  placeholder="说点什么..."
-                  rows={2}
-                  maxLength={280}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-sky-500 outline-none resize-none"
-                />
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs text-gray-400">{postContent.length}/280</span>
-                  <button
-                    type="submit"
-                    disabled={isPosting || !postEmail.trim() || !postContent.trim()}
-                    className="px-4 py-1.5 bg-sky-600 text-white text-sm rounded-lg hover:bg-sky-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 transition"
-                  >
-                    {isPosting ? '发布中...' : '发布'}
-                  </button>
-                </div>
-              </form>
-            )}
 
             {/* 动态列表 */}
             {statuses.length === 0 ? (

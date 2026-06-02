@@ -3,9 +3,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import AboutCard from '@/components/home/AboutCard';
 import CalendarCard from '@/components/home/CalendarCard';
-import Link from 'next/link';
-import PortfolioCard from '@/components/home/PortfolioCard';
-import MessagesCard from '@/components/home/MessagesCard';
 import ClockCard from '@/components/home/ClockCard';
 import AnnouncementCard from '@/components/home/AnnouncementCard';
 import MusicCard from '@/components/home/MusicCard';
@@ -14,7 +11,6 @@ import InfoSection from '@/components/home/InfoSection';
 
 type CardItem = {
   id: string;
-  href?: string;
   size: number;
   color: string;
   render: (isHovered: boolean) => React.ReactNode;
@@ -26,8 +22,6 @@ const BREAKPOINT = 768;
 const CARD_COLORS: Record<string, string> = {
   about: '#6366f1',
   calendar: '#f59e0b',
-  portfolio: '#3b82f6',
-  messages: '#10b981',
   clock: '#06b6d4',
   announcement: '#f43f5e',
   music: '#f97316',
@@ -81,8 +75,6 @@ export default function Home() {
       { id: 'clock',         size: 160, color: CARD_COLORS.clock,         render: (h: boolean) => <ClockCard isHovered={h} /> },
       { id: 'announcement', size: 170, color: CARD_COLORS.announcement, render: (h: boolean) => <AnnouncementCard isHovered={h} /> },
       { id: 'music',   size: 155, color: CARD_COLORS.music,          render: (h: boolean) => <MusicCard isHovered={h} /> },
-      { id: 'portfolio',     size: 140, color: CARD_COLORS.portfolio,     href: '/portfolio', render: (h: boolean) => <PortfolioCard isHovered={h} /> },
-      { id: 'messages',      size: 140, color: CARD_COLORS.messages,      href: '/messages', render: (h: boolean) => <MessagesCard isHovered={h} /> },
     ],
     [],
   );
@@ -144,13 +136,7 @@ export default function Home() {
                   onTouchStart={() => handleMouseEnter(item.id)}
                   onTouchEnd={handleMouseLeave}
                 >
-                  {item.href ? (
-                    <Link key={item.id} href={item.href} className="block w-full h-full">
-                      {card}
-                    </Link>
-                  ) : (
-                    <div className="block w-full h-full">{card}</div>
-                  )}
+                  <div className="block w-full h-full">{card}</div>
                 </div>
               );
             })}
@@ -202,56 +188,34 @@ export default function Home() {
 
           {/* ── cards ── */}
           {baseCards.map((item, index) => {
-            const className = `bubble-wrap ${getCardClassName(item.id)}`;
             const pos = initialPositions.get(item.id);
-            const style = pos
-              ? { transform: `translate(${pos.x}px, ${pos.y}px) translate(-50%, -50%)` }
-              : undefined;
-
-            const inner = (
-              <div
-                className={`bubble-inner ${bloomReady ? 'bloom-start' : ''}`}
-                style={{
-                  width: `${item.size}px`,
-                  height: `${item.size}px`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  animationDelay: `${index * 0.06}s`,
-                }}
-              >
-                <div style={{ width: '100%', height: '100%' }}>
-                  {item.render(hoveredCard === item.id)}
-                </div>
-              </div>
-            );
-
-            if (item.href) {
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  ref={registerCard(item.id)}
-                  className={className}
-                  style={style}
-                  onMouseEnter={() => handleMouseEnter(item.id)}
-                  onMouseLeave={handleMouseLeave}
-                >
-                  {inner}
-                </Link>
-              );
-            }
 
             return (
               <div
                 key={item.id}
                 ref={registerCard(item.id)}
-                className={className}
-                style={style}
+                className={`bubble-wrap ${getCardClassName(item.id)}`}
+                style={pos
+                  ? { transform: `translate(${pos.x}px, ${pos.y}px) translate(-50%, -50%)` }
+                  : undefined}
                 onMouseEnter={() => handleMouseEnter(item.id)}
                 onMouseLeave={handleMouseLeave}
               >
-                {inner}
+                <div
+                  className={`bubble-inner ${bloomReady ? 'bloom-start' : ''}`}
+                  style={{
+                    width: `${item.size}px`,
+                    height: `${item.size}px`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    animationDelay: `${index * 0.06}s`,
+                  }}
+                >
+                  <div style={{ width: '100%', height: '100%' }}>
+                    {item.render(hoveredCard === item.id)}
+                  </div>
+                </div>
               </div>
             );
           })}
