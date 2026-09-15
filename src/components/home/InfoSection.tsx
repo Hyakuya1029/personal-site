@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { parseDbTimestamp } from '@/lib/datetime';
 
 interface Status {
   id: number;
@@ -11,7 +11,7 @@ interface Status {
 
 function relativeTime(dateStr: string) {
   const now = new Date();
-  const created = new Date(dateStr);
+  const created = parseDbTimestamp(dateStr);
   const diffMs = now.getTime() - created.getTime();
   const minutes = Math.floor(diffMs / 60000);
   if (minutes < 1) return '刚刚';
@@ -27,31 +27,23 @@ function relativeTime(dateStr: string) {
 
 export default function InfoSection() {
   const [statuses, setStatuses] = useState<Status[]>([]);
-  const [stats, setStats] = useState({ posts: 0, comments: 0, messages: 0, friends: 0 });
+  const [statusError, setStatusError] = useState(false);
+  const [stats, setStats] = useState({ posts: 0, comments: 0, messages: 0, friends: 0, statuses: 0 });
 
   useEffect(() => {
     fetch('/api/status')
       .then(r => r.json())
-      .then(d => { if (d.success) setStatuses(d.data); })
-      .catch(() => {});
+      .then(d => {
+        if (d.success) setStatuses(d.data);
+        else setStatusError(true);
+      })
+      .catch(() => setStatusError(true));
 
-    fetch('/api/posts')
+    // 站点统计由服务端聚合返回，前端不再直连数据库
+    fetch('/api/stats')
       .then(r => r.json())
-      .then((data: any[]) => setStats(prev => ({ ...prev, posts: data.length })))
+      .then(d => { if (d.success) setStats(d.data); })
       .catch(() => {});
-
-    Promise.all([
-      supabase.from('comments').select('id', { count: 'exact', head: true }),
-      supabase.from('messages').select('id', { count: 'exact', head: true }),
-      supabase.from('friend_applications').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
-    ]).then(([c, m, f]) => {
-      setStats(prev => ({
-        ...prev,
-        comments: c.count ?? 0,
-        messages: m.count ?? 0,
-        friends: f.count ?? 0,
-      }));
-    }).catch(() => {});
   }, []);
 
   return (
@@ -102,7 +94,7 @@ export default function InfoSection() {
             <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">站点统计</h4>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: '动态', value: statuses.length },
+                { label: '动态', value: stats.statuses },
                 { label: '文章', value: stats.posts },
                 { label: '评论', value: stats.comments },
                 { label: '留言', value: stats.messages },
@@ -128,7 +120,9 @@ export default function InfoSection() {
             </div>
 
             {/* 动态列表 */}
-            {statuses.length === 0 ? (
+            {statusError ? (
+              <p className="text-gray-400 dark:text-gray-500 text-sm">动态加载失败，请刷新页面重试</p>
+            ) : statuses.length === 0 ? (
               <p className="text-gray-400 dark:text-gray-500 text-sm">暂无动态</p>
             ) : (
               <div className="space-y-3">

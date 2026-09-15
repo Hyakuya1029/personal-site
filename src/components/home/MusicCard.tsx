@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import Card from './Card';
-import { supabase } from '@/lib/supabase';
 import { useMusic } from '@/components/layout/MusicProvider';
 
 interface MusicCardProps {
@@ -13,12 +12,14 @@ export default function MusicCard({ isHovered = false }: MusicCardProps) {
   const { songs, song, playing, toggle, prev, next, setSongs } = useMusic();
 
   useEffect(() => {
-    supabase
-      .from('music')
-      .select('title, artist, audio_url')
-      .eq('active', true)
-      .order('created_at', { ascending: true })
-      .then(({ data }) => { if (data && data.length > 0) setSongs(data); });
+    fetch('/api/music')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          setSongs(json.data);
+        }
+      })
+      .catch((error) => console.warn('[音乐卡片] 读取歌单失败:', error));
   }, [setSongs]);
 
   return (

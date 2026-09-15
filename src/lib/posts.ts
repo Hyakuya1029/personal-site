@@ -57,6 +57,9 @@ export function getPostById(id: string): Post | undefined {
   const fileContents = readFileSync(fullPath, 'utf8');
   const { data, content } = matter(fileContents);
 
+  // 草稿（published 不为 true）不能通过 URL 直接访问
+  if (!data.published) return undefined;
+
   return {
     id,
     title: data.title,
@@ -70,7 +73,6 @@ export function getPostById(id: string): Post | undefined {
 }
 
 export function getAllPostIds(): string[] {
-  if (!existsSync(postsDirectory)) return [];
-  const fileNames = readdirSync(postsDirectory).filter((f) => f.endsWith('.md'));
-  return fileNames.map((fileName) => fileName.replace(/\.md$/, ''));
+  // 复用 getAllPosts 的 published 过滤，避免草稿被 generateStaticParams 静态生成
+  return getAllPosts().map((post) => post.id);
 }

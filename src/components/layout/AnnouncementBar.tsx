@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 
 interface Announcement {
   id: number;
@@ -12,15 +11,14 @@ export default function AnnouncementBar() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
   useEffect(() => {
-    supabase
-      .from('announcements')
-      .select('id, content')
-      .eq('active', true)
-      .in('location', ['banner', 'both'])
-      .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        if (data && data.length > 0) setAnnouncements(data);
-      });
+    fetch('/api/announcements?location=banner')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          setAnnouncements(json.data);
+        }
+      })
+      .catch((error) => console.warn('[公告条] 读取失败:', error));
   }, []);
 
   if (announcements.length === 0) return null;

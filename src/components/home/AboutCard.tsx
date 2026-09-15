@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Card from './Card';
-import { supabase } from '@/lib/supabase';
 
 interface AboutCardProps {
   isHovered?: boolean;
@@ -38,16 +37,15 @@ export default function AboutCard({ isHovered = false }: AboutCardProps) {
   useEffect(() => {
     setGreeting(getGreeting(new Date().getHours()));
 
-    Promise.all([
-      supabase.from('comments').select('created_at').order('created_at', { ascending: false }).limit(1).maybeSingle(),
-      supabase.from('messages').select('created_at').order('created_at', { ascending: false }).limit(1).maybeSingle(),
-      supabase.from('status_posts').select('created_at').order('created_at', { ascending: false }).limit(1).maybeSingle(),
-    ]).then(([c, m, s]) => {
-      const times = [c.data?.created_at, m.data?.created_at, s.data?.created_at].filter(Boolean).map(t => new Date(t));
-      if (times.length > 0) {
-        setLastActive(timeAgo(new Date(Math.max(...times.map(t => t.getTime())))));
-      }
-    });
+    // 最近活跃时间由服务端聚合返回，前端不再直连数据库
+    fetch('/api/stats')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && json.data?.lastActive) {
+          setLastActive(timeAgo(new Date(json.data.lastActive)));
+        }
+      })
+      .catch((error) => console.warn('[关于卡片] 读取站点动态失败:', error));
   }, []);
 
   return (

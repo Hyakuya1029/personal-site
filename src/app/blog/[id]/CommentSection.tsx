@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useState, useEffect, useCallback } from 'react';
 import { getLocationText } from '@/lib/getLocationText';
-import { isOwnerEmail } from '@/lib/owner';
+import { parseDbTimestamp } from '@/lib/datetime';
 
 function OwnerBadge() {
   return (
@@ -17,12 +16,12 @@ interface Comment {
   id: string;
   post_id: string;
   name: string;
-  email: string;
   content: string;
   created_at: string;
   parent_id: string | null;
   country: string;
   region: string;
+  is_owner: boolean;
 }
 
 interface CommentSectionProps {
@@ -40,41 +39,27 @@ export default function CommentSection({ postId }: CommentSectionProps) {
   const [replyContent, setReplyContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [ownerIds, setOwnerIds] = useState<Set<string>>(new Set());
+  const [loadError, setLoadError] = useState(false);
 
-  useEffect(() => {
-    fetchComments();
+  const fetchComments = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // 走服务端接口：邮箱与 IP 不会下发到浏览器，站长标识由服务端判定
+      const response = await fetch(`/api/comments?post_id=${encodeURIComponent(postId)}`);
+      const result = await response.json();
+      if (!result.success) throw new Error(result.error || '读取失败');
+      setComments(result.data || []);
+      setLoadError(false);
+    } catch (error) {
+      console.error('获取评论失败:', error);
+      setLoadError(true);
+    }
+    setIsLoading(false);
   }, [postId]);
 
   useEffect(() => {
-    let cancelled = false;
-    async function check() {
-      const ids = new Set<string>();
-      for (const c of comments) {
-        if (c.email && await isOwnerEmail(c.email)) ids.add(c.id);
-      }
-      if (!cancelled) setOwnerIds(ids);
-    }
-    check();
-    return () => { cancelled = true; };
-  }, [comments]);
-
-  const fetchComments = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('comments')
-        .select('*')
-        .eq('post_id', postId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setComments(data || []);
-    } catch (error) {
-      console.error('获取评论失败:', error);
-    }
-    setIsLoading(false);
-  };
+    fetchComments();
+  }, [fetchComments]);
 
   const handleSubmit = async (e: React.FormEvent, isReply: boolean = false) => {
     e.preventDefault();
@@ -111,9 +96,9 @@ export default function CommentSection({ postId }: CommentSectionProps) {
         body: JSON.stringify(commentData),
       });
 
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.error || '提交失败');
+      const result = await response.json().catch(() => null);
+      if (!result?.success) {
+        throw new Error(result?.error || '提交失败');
       }
       
       if (isReply) {
@@ -127,19 +112,21 @@ export default function CommentSection({ postId }: CommentSectionProps) {
         setContent('');
       }
       await fetchComments();
-    } catch (error) {
+    } catch (error: any) {
       console.error('提交评论失败:', error);
-      alert('提交失败，请重试');
+      alert(error?.message || '提交失败，请重试');
     }
     
     setIsSubmitting(false);
   };
 
+  // 统一按 UTC 解析 + 固定按东八区渲染，
+  // 之前是"手动 +8 小时再用本地时区格式化"，等于叠加了访客自己的时区偏移
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const offset = 8 * 60 * 60 * 1000;
-    const shanghaiTime = new Date(date.getTime() + offset);
-    return shanghaiTime.toLocaleString('zh-CN', {
+    const date = parseDbTimestamp(dateStr);
+    if (Number.isNaN(date.getTime())) return dateStr;
+    return date.toLocaleString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -330,6 +317,10 @@ export default function CommentSection({ postId }: CommentSectionProps) {
           <div className="text-center py-8 text-gray-500">
             <p>加载评论中...</p>
           </div>
+        ) : loadError ? (
+          <div className="text-center py-8 text-gray-500">
+            <p>评论加载失败，请刷新页面重试</p>
+          </div>
         ) : getTopLevelComments().length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <p>暂无评论，快来发表第一条评论吧！</p>
@@ -346,7 +337,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="font-semibold text-gray-800 dark:text-gray-200">{comment.name}</h4>
-                      {ownerIds.has(comment.id) && <OwnerBadge />}
+                      {comment.is_owner && <OwnerBadge />}
                       {getLocationText(comment.country, comment.region) && (
                         <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
                            来自 {getLocationText(comment.country, comment.region)}
@@ -377,7 +368,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <h4 className="font-semibold text-gray-800 dark:text-gray-200 text-sm">{reply.name}</h4>
-                            {ownerIds.has(reply.id) && <OwnerBadge />}
+                            {reply.is_owner && <OwnerBadge />}
                             {getLocationText(reply.country, reply.region) && (
                               <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
                                 来自 {getLocationText(reply.country, reply.region)}

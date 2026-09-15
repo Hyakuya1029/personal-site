@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { getLocationText } from '@/lib/getLocationText';
-import { isOwnerEmail } from '@/lib/owner';
+import { parseDbTimestamp } from '@/lib/datetime';
 
 function OwnerBadge() {
   return (
@@ -16,11 +15,11 @@ function OwnerBadge() {
 interface Message {
   id: number;
   name: string;
-  email: string;
   content: string;
   country: string;
   region: string;
   created_at: string;
+  is_owner: boolean;
 }
 
 const WALL_COLORS = [
@@ -59,37 +58,23 @@ export default function MessagesPage() {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [ownerIds, setOwnerIds] = useState<Set<number>>(new Set());
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     fetchMessages();
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function check() {
-      const ids = new Set<number>();
-      for (const m of messages) {
-        if (m.email && await isOwnerEmail(m.email)) ids.add(m.id);
-      }
-      if (!cancelled) setOwnerIds(ids);
-    }
-    check();
-    return () => { cancelled = true; };
-  }, [messages]);
-
   const fetchMessages = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setMessages(data || []);
+      const response = await fetch('/api/messages');
+      const result = await response.json();
+      if (!result.success) throw new Error(result.error || '读取失败');
+      setMessages(result.data || []);
+      setLoadError(false);
     } catch (error) {
       console.error('获取留言失败:', error);
+      setLoadError(true);
     }
     setIsLoading(false);
   };
@@ -106,23 +91,26 @@ export default function MessagesPage() {
         body: JSON.stringify({ name: name.trim(), email: email.trim(), content: content.trim() }),
       });
 
-      const result = await response.json();
-      if (!result.success) throw new Error(result.error || '提交失败');
+      const result = await response.json().catch(() => null);
+      if (!result?.success) throw new Error(result?.error || '提交失败');
 
       setName('');
       setEmail('');
       setContent('');
       await fetchMessages();
-    } catch (error) {
+    } catch (error: any) {
       console.error('提交留言失败:', error);
-      alert('提交失败，请重试');
+      alert(error?.message || '提交失败，请重试');
     }
     setIsSubmitting(false);
   };
 
+  // 固定按东八区显示，避免不同时区访客看到不同日期
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+    const date = parseDbTimestamp(dateStr);
+    if (Number.isNaN(date.getTime())) return dateStr;
     return date.toLocaleDateString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -204,6 +192,11 @@ export default function MessagesPage() {
         <div className="text-center py-20 text-gray-400 dark:text-gray-500">
           <p>加载留言中...</p>
         </div>
+      ) : loadError ? (
+        <div className="text-center py-20 text-gray-400 dark:text-gray-500">
+          <p className="text-lg">留言加载失败</p>
+          <p className="text-sm mt-2">请刷新页面重试</p>
+        </div>
       ) : messages.length === 0 ? (
         <div className="text-center py-20 text-gray-400 dark:text-gray-500">
           <p className="text-lg">墙上还没有便签</p>
@@ -239,7 +232,7 @@ export default function MessagesPage() {
                   <div className="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
                     <span className="font-medium text-gray-500 dark:text-gray-400">
                       — {msg.name}
-                      {ownerIds.has(msg.id) && <> <OwnerBadge /></>}
+                      {msg.is_owner && <> <OwnerBadge /></>}
                       {location && (
                         <span className="ml-1 text-green-600 text-[10px]">来自 {location}</span>
                       )}

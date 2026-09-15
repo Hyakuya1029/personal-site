@@ -55,7 +55,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <Link href="/" className="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100">
-              Hyakuya's site
+              Hyakuya&apos;s site
             </Link>
           </div>
 

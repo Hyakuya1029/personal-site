@@ -39,12 +39,12 @@ export default function ApplyForm() {
         }),
       });
 
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error);
+      const data = await res.json().catch(() => null);
+      if (!data?.success) throw new Error(data?.error || '提交失败');
       reset();
       setDone(true);
-    } catch {
-      alert('提交失败，请重试');
+    } catch (error: any) {
+      alert(error?.message || '提交失败，请重试');
     } finally {
       setSubmitting(false);
     }

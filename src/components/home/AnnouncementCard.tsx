@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Card from './Card';
-import { supabase } from '@/lib/supabase';
 
 interface AnnouncementCardProps {
   isHovered?: boolean;
@@ -12,17 +11,14 @@ export default function AnnouncementCard({ isHovered = false }: AnnouncementCard
   const [text, setText] = useState('');
 
   useEffect(() => {
-    supabase
-      .from('announcements')
-      .select('content')
-      .eq('active', true)
-      .in('location', ['card', 'both'])
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) setText(data.content);
-      });
+    fetch('/api/announcements?location=card')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          setText(json.data[0].content);
+        }
+      })
+      .catch((error) => console.warn('[公告栏] 读取失败:', error));
   }, []);
 
   return (

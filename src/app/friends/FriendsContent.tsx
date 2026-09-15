@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import FriendList from './FriendList';
 import ApplyForm from './ApplyForm';
 
@@ -17,17 +16,20 @@ interface Friend {
 export default function FriendsContent() {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    supabase
-      .from('friend_applications')
-      .select('id, name, avatar, url, description, tags')
-      .eq('status', 'approved')
-      .order('created_at', { ascending: true })
-      .then(({ data, error }) => {
-        if (!error && data) setFriends(data);
-        setLoading(false);
-      });
+    fetch('/api/friends')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success && Array.isArray(json.data)) {
+          setFriends(json.data);
+        } else {
+          setError(true);
+        }
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
   }, []);
 
   const allTags = Array.from(new Set(friends.flatMap(f => f.tags)));
@@ -42,7 +44,11 @@ export default function FriendsContent() {
 
   return (
     <>
-      {friends.length > 0 ? (
+      {error ? (
+        <p className="text-center text-gray-400 dark:text-gray-500 text-sm">
+          友链加载失败，请刷新页面重试
+        </p>
+      ) : friends.length > 0 ? (
         <FriendList friends={friends} allTags={allTags} />
       ) : (
         <p className="text-center text-gray-400 dark:text-gray-500 text-sm">

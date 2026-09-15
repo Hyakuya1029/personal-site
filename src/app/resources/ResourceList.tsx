@@ -8,7 +8,6 @@ interface Resource {
   title: string;
   description: string;
   tags: string;
-  file_url: string;
   file_type: string;
   post_id: string | null;
   created_at: string;
@@ -73,13 +72,17 @@ function getFileIcon(fileType: string) {
 export default function ResourceList() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [activeTag, setActiveTag] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/resources')
       .then(r => r.json())
-      .then(json => { if (json.success) setResources(json.data); })
-      .catch(() => {})
+      .then(json => {
+        if (json.success) setResources(json.data);
+        else setLoadError(true);
+      })
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -97,6 +100,10 @@ export default function ResourceList() {
         <div className="w-6 h-6 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
+  }
+
+  if (loadError) {
+    return <p className="text-gray-400 dark:text-gray-500 text-center text-sm py-12">资源加载失败，请刷新页面重试</p>;
   }
 
   if (resources.length === 0) {
