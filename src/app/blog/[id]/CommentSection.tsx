@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getLocationText } from '@/lib/getLocationText';
 import { parseDbTimestamp } from '@/lib/datetime';
+import OwnerPasswordField from '@/components/ui/OwnerPasswordField';
 
 function OwnerBadge() {
   return (
@@ -40,6 +41,8 @@ export default function CommentSection({ postId }: CommentSectionProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [ownerPassword, setOwnerPassword] = useState('');
+  const [replyOwnerPassword, setReplyOwnerPassword] = useState('');
 
   const fetchComments = useCallback(async () => {
     setIsLoading(true);
@@ -81,6 +84,8 @@ export default function CommentSection({ postId }: CommentSectionProps) {
         name: submitName.trim(),
         email: submitEmail.trim(),
         content: submitContent.trim(),
+        // 站长密码：填对了服务端才会打「站长」标
+        owner_password: isReply ? replyOwnerPassword : ownerPassword,
       };
 
       if (isReply && replyTo) {
@@ -249,13 +254,16 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                 required
               />
             </div>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:bg-sky-400 disabled:cursor-not-allowed transition"
-            >
-              {isSubmitting ? '提交中...' : '提交回复'}
-            </button>
+            <div className="flex items-center justify-between gap-4">
+              <OwnerPasswordField value={replyOwnerPassword} onChange={setReplyOwnerPassword} />
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:bg-sky-400 disabled:cursor-not-allowed transition"
+              >
+                {isSubmitting ? '提交中...' : '提交回复'}
+              </button>
+            </div>
           </form>
         </div>
       )}
@@ -301,13 +309,16 @@ export default function CommentSection({ postId }: CommentSectionProps) {
               placeholder="写下你的评论..."
             />
           </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:bg-sky-400 disabled:cursor-not-allowed transition"
-          >
-            {isSubmitting ? '提交中...' : '发表评论'}
-          </button>
+          <div className="flex items-center justify-between gap-4">
+            <OwnerPasswordField value={ownerPassword} onChange={setOwnerPassword} />
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:bg-sky-400 disabled:cursor-not-allowed transition"
+            >
+              {isSubmitting ? '提交中...' : '发表评论'}
+            </button>
+          </div>
         </form>
       )}
 

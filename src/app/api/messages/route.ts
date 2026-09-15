@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getGeoInfo, getClientIP, getQueryIP } from '@/lib/geo';
 import { sendNotification } from '@/lib/notify';
-import { isOwnerEmail } from '@/lib/owner';
+import { isOwnerEmail, resolveStoredEmail } from '@/lib/owner';
 import { cleanText, isValidEmail } from '@/lib/validate';
 import { rateLimit } from '@/lib/rateLimit';
 
@@ -64,6 +64,10 @@ export async function POST(request: Request) {
     const name = cleanText((body as any).name, MAX_NAME);
     const email = cleanText((body as any).email, MAX_EMAIL);
     const content = cleanText((body as any).content, MAX_CONTENT);
+    const ownerPassword = cleanText((body as any).owner_password, 200);
+
+    // 只有密码正确才写入站长邮箱；否则冒填站长邮箱会被清空
+    const storedEmail = resolveStoredEmail(email, ownerPassword);
 
     if (!name) {
       return NextResponse.json({ success: false, error: '请填写昵称' }, { status: 400 });
@@ -82,7 +86,7 @@ export async function POST(request: Request) {
       .from('messages')
       .insert({
         name,
-        email,
+        email: storedEmail,
         content,
         ip_address: ip,
         country: geoInfo.country,

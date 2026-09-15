@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getLocationText } from '@/lib/getLocationText';
 import { parseDbTimestamp } from '@/lib/datetime';
+import OwnerPasswordField from '@/components/ui/OwnerPasswordField';
 
 function OwnerBadge() {
   return (
@@ -59,6 +60,7 @@ export default function MessagesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [ownerPassword, setOwnerPassword] = useState('');
 
   useEffect(() => {
     fetchMessages();
@@ -88,7 +90,13 @@ export default function MessagesPage() {
       const response = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), email: email.trim(), content: content.trim() }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          content: content.trim(),
+          // 站长密码：填对了服务端才会打「站长」标
+          owner_password: ownerPassword,
+        }),
       });
 
       const result = await response.json().catch(() => null);
@@ -173,9 +181,12 @@ export default function MessagesPage() {
             />
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-400 dark:text-gray-500">
-              {content.length}/500
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                {content.length}/500
+              </span>
+              <OwnerPasswordField value={ownerPassword} onChange={setOwnerPassword} />
+            </div>
             <button
               type="submit"
               disabled={!name.trim() || !content.trim() || isSubmitting}
