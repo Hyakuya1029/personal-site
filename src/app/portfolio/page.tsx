@@ -12,41 +12,24 @@ interface Project {
   demoUrl?: string;
 }
 
-const projects: Project[] = [];
-
 /*
-// ========== 示例项目（取消注释即可使用）==========
-
-const _example: Project[] = [
+ * 作品集列表。
+ * 注意 image 的写法：public/ 目录直接映射到站点根路径，
+ * 所以 public/portfolio/fortune.png 对应的就是 '/portfolio/fortune.png'
+ * （不要加 /public 前缀，也不要再套引号）。
+ */
+const projects: Project[] = [
   {
     id: 1,
-    title: '电商平台',
-    description: '基于 Next.js 的全栈电商平台，支持商品搜索、购物车、订单管理等功能',
-    image: '/images/projects/ecommerce.png',
-    tags: ['Next.js', 'TypeScript', 'Prisma'],
-    category: '全栈',
-    githubUrl: 'https://github.com/yourname/ecommerce',
-    demoUrl: 'https://ecommerce-demo.vercel.app',
-  },
-  {
-    id: 2,
-    title: '天气小程序',
-    description: '微信小程序，实时天气查询与7天预报，支持城市搜索',
-    image: '/images/projects/weather.png',
-    tags: ['WeChat', 'Vue.js'],
-    category: '小程序',
-  },
-  {
-    id: 3,
-    title: '组件库',
-    description: '基于 Tailwind CSS 的 React 组件库，包含 30+ 常用组件',
-    image: '/images/projects/ui-lib.png',
-    tags: ['React', 'Tailwind CSS', 'Storybook'],
-    category: '库/工具',
-    githubUrl: 'https://github.com/yourname/ui-lib',
+    title: '星签',
+    description: '赛博算命',
+    image: '/portfolio/fortune.png',
+    tags: ['Next.js', 'React', 'TypeScript'],
+    category: '前端',
+    githubUrl: 'https://github.com/Hyakuya1029/fortune-telling',
+    demoUrl: 'https://fortune.hyakuya.cc.cd/',
   },
 ];
-*/
 
 export const metadata: Metadata = {
   title: '作品集',
