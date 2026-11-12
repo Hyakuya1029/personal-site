@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'Hyakuya' }],
   icons: {
     icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: {
     type: 'website',
@@ -38,15 +39,6 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('theme');if(!t){t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'}document.documentElement.classList.toggle('dark',t==='dark')}catch(e){}})()`,
           }}
-        />
-        {/* 字体 CDN 预连接 — 省掉 DNS + TLS 往返 */}
-        <link rel="dns-prefetch" href="//cdn.jsdelivr.net" />
-        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
-        {/* 直接加载 regular 字重，绕过 style.css → 6 个 @import 的请求链 */}
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/@callmebill/lxgw-wenkai-web@1.522.0/lxgwwenkai-regular/result.css"
-          crossOrigin="anonymous"
         />
       </head>
       <body className="antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors">
