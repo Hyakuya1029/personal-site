@@ -32,7 +32,3 @@ export default function Card({
     </div>
   );
 }
-
-export function CardDescription({ children }: { children: ReactNode }) {
-  return <p className="text-xs text-gray-500 dark:text-gray-400 text-center">{children}</p>;
-}

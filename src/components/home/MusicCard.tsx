@@ -3,6 +3,13 @@
 import { useEffect } from 'react';
 import Card from './Card';
 import { useMusic } from '@/components/layout/MusicProvider';
+import { useApiData } from '@/hooks/useApiData';
+
+interface Song {
+  title: string;
+  artist: string;
+  audio_url: string;
+}
 
 interface MusicCardProps {
   isHovered?: boolean;
@@ -10,22 +17,17 @@ interface MusicCardProps {
 
 export default function MusicCard({ isHovered = false }: MusicCardProps) {
   const { songs, song, playing, toggle, prev, next, setSongs } = useMusic();
+  const { data } = useApiData<Song[]>('/api/music');
 
   useEffect(() => {
-    fetch('/api/music')
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-          setSongs(json.data);
-        }
-      })
-      .catch((error) => console.warn('[音乐卡片] 读取歌单失败:', error));
-  }, [setSongs]);
+    if (data && data.length > 0) setSongs(data);
+  }, [data, setSongs]);
 
   return (
     <Card className="bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-900/30 dark:to-amber-900/20" isHovered={isHovered}>
       <div className="flex flex-col items-center text-center">
-        <div className="flex items-center gap-1 mb-3">
+        <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">音乐</h3>
+        <div className="flex items-center gap-1 mb-2">
           <button onClick={prev} disabled={songs.length < 2}
             className="w-7 h-7 rounded-full bg-orange-200 dark:bg-orange-800 flex items-center justify-center hover:scale-110 transition disabled:opacity-30">
             <svg className="w-4 h-4 text-orange-600 dark:text-orange-300" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6z"/></svg>
@@ -42,7 +44,6 @@ export default function MusicCard({ isHovered = false }: MusicCardProps) {
             <svg className="w-4 h-4 text-orange-600 dark:text-orange-300" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6h2v12h-2V6z"/></svg>
           </button>
         </div>
-        <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-1">音乐</h3>
         {song ? (
           <div className="w-full overflow-hidden">
             <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed whitespace-nowrap animate-marquee inline-flex gap-x-6">

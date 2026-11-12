@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Card from './Card';
+import { useApiData } from '@/hooks/useApiData';
 
 interface AboutCardProps {
   isHovered?: boolean;
@@ -34,19 +35,17 @@ export default function AboutCard({ isHovered = false }: AboutCardProps) {
   const [greeting, setGreeting] = useState<string>('');
   const [lastActive, setLastActive] = useState<string>('');
 
+  // 最近活跃时间由服务端聚合返回。
+  // InfoSection 也要同一份 /api/stats，靠 useApiData 的去重只真正请求一次。
+  const { data: stats } = useApiData<{ lastActive: string | null }>('/api/stats');
+
   useEffect(() => {
     setGreeting(getGreeting(new Date().getHours()));
-
-    // 最近活跃时间由服务端聚合返回，前端不再直连数据库
-    fetch('/api/stats')
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.success && json.data?.lastActive) {
-          setLastActive(timeAgo(new Date(json.data.lastActive)));
-        }
-      })
-      .catch((error) => console.warn('[关于卡片] 读取站点动态失败:', error));
   }, []);
+
+  useEffect(() => {
+    if (stats?.lastActive) setLastActive(timeAgo(new Date(stats.lastActive)));
+  }, [stats]);
 
   return (
     <Card className="relative overflow-hidden bg-gradient-to-br from-sky-50 to-purple-100 dark:from-sky-900/30 dark:to-purple-900/30" isHovered={isHovered}>

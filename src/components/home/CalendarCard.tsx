@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Card from './Card';
-import { CardDescription } from './Card';
 
 interface CalendarCardProps {
   isHovered?: boolean;
 }
+
+const WEEK_NAMES = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
 
 export default function CalendarCard({ isHovered = false }: CalendarCardProps) {
   const [today, setToday] = useState<Date | null>(null);
@@ -15,45 +16,36 @@ export default function CalendarCard({ isHovered = false }: CalendarCardProps) {
     setToday(new Date());
   }, []);
 
-  const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
-
+  // 加载态：用同样版式的占位符，避免真实日期出现时版面跳动
   if (!today) {
     return (
       <Card className="bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40" isHovered={isHovered}>
-        <div className="relative z-10 flex flex-col items-center h-full justify-center">
-          <div className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-1">--</div>
-          <CardDescription>公历</CardDescription>
+        <div className="relative z-10 flex h-full flex-col items-center justify-center">
+          <div className="mb-1 text-xs text-gray-400 dark:text-gray-500">----年</div>
+          <div className="text-3xl font-bold leading-tight text-gray-300 dark:text-gray-600">--月--日</div>
+          <div className="mt-1.5 text-sm text-gray-300 dark:text-gray-600">--</div>
         </div>
       </Card>
     );
   }
 
-  const month = today.toLocaleDateString('zh-CN', { month: 'long' });
   const year = today.getFullYear();
-  const dayOfWeek = today.getDay();
 
   return (
     <Card className="bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40" isHovered={isHovered}>
-      <div className="relative z-10 flex flex-col items-center">
-        <div className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-1">{today.getDate()}</div>
-        <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">{month} {year}</div>
-
-        <div className="grid grid-cols-7 gap-1 text-[10px] mb-3">
-          {weekDays.map((day, index) => (
-            <div
-              key={day}
-              className={`w-5 h-5 flex items-center justify-center rounded-full transition-all duration-200 ${
-                index === dayOfWeek
-                  ? 'bg-sky-500 text-white font-semibold scale-110'
-                  : 'text-gray-400 dark:text-gray-500'
-              }`}
-            >
-              {day}
-            </div>
-          ))}
+      {/*
+        按日常读日期的顺序排：年份 → 几月几日 → 星期几。
+        原来那句「公历」是历法术语，日常看日期没人会说，去掉了；
+        星期几用完整汉字而不是 S~F 字母条，一眼就知道「今天周几」。
+      */}
+      <div className="relative z-10 flex flex-col items-center justify-center">
+        <div className="mb-1 text-xs text-gray-500 dark:text-gray-400">{year}年</div>
+        <div className="text-3xl font-bold leading-tight text-gray-800 dark:text-gray-100">
+          {today.getMonth() + 1}月{today.getDate()}日
         </div>
-
-        <CardDescription>公历</CardDescription>
+        <div className="mt-1.5 text-sm font-medium text-sky-600 dark:text-sky-400">
+          {WEEK_NAMES[today.getDay()]}
+        </div>
       </div>
     </Card>
   );

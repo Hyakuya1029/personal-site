@@ -1,41 +1,35 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Card from './Card';
+import { useApiData } from '@/hooks/useApiData';
+
+interface Announcement {
+  id: number;
+  content: string;
+  location: string;
+}
 
 interface AnnouncementCardProps {
   isHovered?: boolean;
 }
 
 export default function AnnouncementCard({ isHovered = false }: AnnouncementCardProps) {
-  const [text, setText] = useState('');
+  // 和顶部公告条共用同一个 URL，靠 useApiData 的去重只真正请求一次
+  const { data } = useApiData<Announcement[]>('/api/announcements');
 
-  useEffect(() => {
-    fetch('/api/announcements?location=card')
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-          setText(json.data[0].content);
-        }
-      })
-      .catch((error) => console.warn('[公告栏] 读取失败:', error));
-  }, []);
+  const text =
+    (data ?? []).find((a) => a.location === 'card' || a.location === 'both')?.content ?? '';
 
   return (
     <Card className="bg-gradient-to-br from-rose-50 to-pink-100 dark:from-rose-900/30 dark:to-pink-900/20" isHovered={isHovered}>
-      <div className="flex flex-col items-center text-center max-w-full px-2">
-        <div className="w-10 h-10 rounded-full bg-rose-200 dark:bg-rose-800 flex items-center justify-center mb-3">
-          <svg className="w-5 h-5 text-rose-600 dark:text-rose-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-          </svg>
-        </div>
-        <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-1">公告栏</h3>
+      <div className="flex max-w-full flex-col items-center px-1 text-center">
+        <h3 className="mb-2 text-base font-semibold text-gray-800 dark:text-gray-200">公告栏</h3>
         {text ? (
-          <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-2">
+          <p className="text-[11px] leading-relaxed text-gray-500 line-clamp-4 dark:text-gray-400">
             {text}
           </p>
         ) : (
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 italic">暂无动态</p>
+          <p className="text-[11px] italic text-gray-400 dark:text-gray-500">暂无动态</p>
         )}
       </div>
     </Card>

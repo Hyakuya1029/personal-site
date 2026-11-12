@@ -70,6 +70,11 @@ export function useBubblePhysics(
   hoveredRef.current = hoveredId;
   const idleFramesRef = useRef<number>(0);
 
+  // 暂停开关：标签页切到后台、或气泡区滚出视口时，跳过这一帧的计算与 setState
+  const pageVisibleRef = useRef(true);
+  const inViewRef = useRef(true);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
   const [connections, setConnections] = useState<Connection[]>([]);
   const [particles, setParticles] = useState<Particle[]>([]);
 
@@ -117,9 +122,38 @@ export function useBubblePhysics(
     (id: string) => (el: HTMLElement | null) => {
       const s = stateRef.current.get(id);
       if (s && el) s.element = el;
+
+      // 拿第一个挂载的气泡当「气泡区是否在视口内」的探针
+      if (el && !observerRef.current && typeof IntersectionObserver !== 'undefined') {
+        observerRef.current = new IntersectionObserver(
+          ([entry]) => {
+            inViewRef.current = entry.isIntersecting;
+          },
+          { rootMargin: '120px' },
+        );
+        observerRef.current.observe(el);
+      }
     },
     [],
   );
+
+  // ── 标签页可见性 ──
+  useEffect(() => {
+    const onVisibility = () => {
+      pageVisibleRef.current = document.visibilityState === 'visible';
+    };
+    onVisibility();
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+
+  // ── 卸载时断开视口观察 ──
+  useEffect(() => {
+    return () => {
+      observerRef.current?.disconnect();
+      observerRef.current = null;
+    };
+  }, []);
 
   // ── continuous physics loop ──
   useEffect(() => {
@@ -128,6 +162,13 @@ export function useBubblePhysics(
     let frame = 0;
 
     const loop = () => {
+      // 滚出视口或标签页在后台：跳过这一帧的全部计算（含每 3 帧一次的 setState），
+      // 但仍然继续排队，所以回到前台会自动恢复，不用重新初始化。
+      if (!pageVisibleRef.current || !inViewRef.current) {
+        animRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
       timeRef.current += 1;
       const dt = 1;
       const arr = Array.from(stateRef.current.values());

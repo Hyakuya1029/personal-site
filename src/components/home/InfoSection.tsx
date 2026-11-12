@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useApiData } from '@/hooks/useApiData';
 import { parseDbTimestamp } from '@/lib/datetime';
 
 interface Status {
@@ -25,26 +25,23 @@ function relativeTime(dateStr: string) {
   return `${created.getMonth() + 1}月${created.getDate()}日`;
 }
 
+interface Stats {
+  posts: number;
+  comments: number;
+  messages: number;
+  friends: number;
+  statuses: number;
+  lastActive: string | null;
+}
+
 export default function InfoSection() {
-  const [statuses, setStatuses] = useState<Status[]>([]);
-  const [statusError, setStatusError] = useState(false);
-  const [stats, setStats] = useState({ posts: 0, comments: 0, messages: 0, friends: 0, statuses: 0 });
+  // /api/stats 也被 AboutCard 用到，useApiData 内部做了请求去重，
+  // 所以首页对这两个接口各自只会真正请求一次。
+  const { data: statuses, error: statusError } = useApiData<Status[]>('/api/status');
+  const { data: stats } = useApiData<Stats>('/api/stats');
 
-  useEffect(() => {
-    fetch('/api/status')
-      .then(r => r.json())
-      .then(d => {
-        if (d.success) setStatuses(d.data);
-        else setStatusError(true);
-      })
-      .catch(() => setStatusError(true));
-
-    // 站点统计由服务端聚合返回，前端不再直连数据库
-    fetch('/api/stats')
-      .then(r => r.json())
-      .then(d => { if (d.success) setStats(d.data); })
-      .catch(() => {});
-  }, []);
+  const list = statuses ?? [];
+  const summary = stats ?? { posts: 0, comments: 0, messages: 0, friends: 0, statuses: 0 };
 
   return (
     <section className="relative bg-white dark:bg-gray-900 pt-20 pb-32 px-4">
@@ -94,11 +91,11 @@ export default function InfoSection() {
             <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">站点统计</h4>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: '动态', value: stats.statuses },
-                { label: '文章', value: stats.posts },
-                { label: '评论', value: stats.comments },
-                { label: '留言', value: stats.messages },
-                { label: '友链', value: stats.friends },
+                { label: '动态', value: summary.statuses },
+                { label: '文章', value: summary.posts },
+                { label: '评论', value: summary.comments },
+                { label: '留言', value: summary.messages },
+                { label: '友链', value: summary.friends },
               ].map(({ label, value }) => (
                 <div key={label} className="text-center">
                   <div className="text-lg font-bold text-sky-600 dark:text-sky-400">{value}</div>
@@ -122,16 +119,16 @@ export default function InfoSection() {
             {/* 动态列表 */}
             {statusError ? (
               <p className="text-gray-400 dark:text-gray-500 text-sm">动态加载失败，请刷新页面重试</p>
-            ) : statuses.length === 0 ? (
+            ) : list.length === 0 ? (
               <p className="text-gray-400 dark:text-gray-500 text-sm">暂无动态</p>
             ) : (
               <div className="space-y-3">
-                {statuses.map(s => (
-                  <div key={s.id}
+                {list.map(item => (
+                  <div key={item.id}
                     className="bg-gray-50 dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700"
                   >
-                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{s.content}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{relativeTime(s.created_at)}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{item.content}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{relativeTime(item.created_at)}</p>
                   </div>
                 ))}
               </div>

@@ -13,27 +13,32 @@ const LOCATIONS = ['banner', 'card'] as const;
 type Location = (typeof LOCATIONS)[number];
 
 /*
- * location=banner → 顶部公告条
- * location=card   → 首页公告栏卡片
- * 两者都会带上同时作用于两处的 'both'
+ * 不带 location  → 返回全部启用中的公告（含 location 字段）。
+ *   顶部公告条和首页公告卡都用这个 URL，靠 hook 的请求去重合成 1 次请求。
+ * location=banner → 只要作用于顶部公告条的（含同时作用于两处的 'both'）
+ * location=card   → 只要作用于首页公告卡的（同上）
  */
 export async function GET(request: Request) {
   try {
-    const location = new URL(request.url).searchParams.get('location') as Location | null;
+    const raw = new URL(request.url).searchParams.get('location');
 
-    if (!location || !LOCATIONS.includes(location)) {
-      return NextResponse.json(
-        { success: false, error: 'location 必须是 banner 或 card' },
-        { status: 400 }
-      );
+    let query = supabase
+      .from('announcements')
+      .select('id, content, location')
+      .eq('active', true)
+      .order('created_at', { ascending: false });
+
+    if (raw) {
+      if (!LOCATIONS.includes(raw as Location)) {
+        return NextResponse.json(
+          { success: false, error: 'location 必须是 banner 或 card' },
+          { status: 400 }
+        );
+      }
+      query = query.in('location', [raw, 'both']);
     }
 
-    const { data, error } = await supabase
-      .from('announcements')
-      .select('id, content')
-      .eq('active', true)
-      .in('location', [location, 'both'])
-      .order('created_at', { ascending: false });
+    const { data, error } = await query;
 
     if (error) throw error;
 

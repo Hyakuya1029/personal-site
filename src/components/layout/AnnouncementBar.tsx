@@ -1,25 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useApiData } from '@/hooks/useApiData';
 
 interface Announcement {
   id: number;
   content: string;
+  location: string;
 }
 
 export default function AnnouncementBar() {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  // 和首页的公告栏卡片共用同一个 URL，靠 useApiData 的去重只真正请求一次
+  const { data } = useApiData<Announcement[]>('/api/announcements');
 
-  useEffect(() => {
-    fetch('/api/announcements?location=banner')
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-          setAnnouncements(json.data);
-        }
-      })
-      .catch((error) => console.warn('[公告条] 读取失败:', error));
-  }, []);
+  const announcements = (data ?? []).filter(
+    (a) => a.location === 'banner' || a.location === 'both'
+  );
 
   if (announcements.length === 0) return null;
 
