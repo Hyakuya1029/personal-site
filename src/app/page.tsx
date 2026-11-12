@@ -1,11 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import AboutCard from '@/components/home/AboutCard';
-import CalendarCard from '@/components/home/CalendarCard';
-import ClockCard from '@/components/home/ClockCard';
-import AnnouncementCard from '@/components/home/AnnouncementCard';
-import MusicCard from '@/components/home/MusicCard';
+import { CARDS, CARD_COLORS } from '@/components/home/cards';
 import { useBubblePhysics } from '@/hooks/useBubblePhysics';
 import InfoSection from '@/components/home/InfoSection';
 
@@ -17,15 +13,6 @@ type CardItem = {
 };
 
 const BREAKPOINT = 768;
-
-/* ── per-card accent colours (used for connections & particles) ── */
-const CARD_COLORS: Record<string, string> = {
-  about: '#6366f1',
-  calendar: '#f59e0b',
-  clock: '#06b6d4',
-  announcement: '#f43f5e',
-  music: '#f97316',
-};
 
 export default function Home() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
@@ -67,15 +54,15 @@ export default function Home() {
     return () => ro.disconnect();
   }, [isMobile]);
 
-  // ── card definitions (stable ref via useMemo) ──
+  // ── card definitions（来自注册表；加卡片只需改 components/home/cards.ts）──
   const baseCards = useMemo<CardItem[]>(
-    () => [
-      { id: 'about',         size: 220, color: CARD_COLORS.about,         render: (h: boolean) => <AboutCard isHovered={h} /> },
-      { id: 'calendar',      size: 200, color: CARD_COLORS.calendar,      render: (h: boolean) => <CalendarCard isHovered={h} /> },
-      { id: 'clock',         size: 160, color: CARD_COLORS.clock,         render: (h: boolean) => <ClockCard isHovered={h} /> },
-      { id: 'announcement', size: 170, color: CARD_COLORS.announcement, render: (h: boolean) => <AnnouncementCard isHovered={h} /> },
-      { id: 'music',   size: 155, color: CARD_COLORS.music,          render: (h: boolean) => <MusicCard isHovered={h} /> },
-    ],
+    () =>
+      CARDS.map(({ id, size, color, Component }) => ({
+        id,
+        size,
+        color,
+        render: (isHovered: boolean) => <Component isHovered={isHovered} />,
+      })),
     [],
   );
 
