@@ -15,7 +15,7 @@ interface Project {
 /*
  * 作品集列表。
  * 注意 image 的写法：public/ 目录直接映射到站点根路径，
- * 所以 public/portfolio/fortune.png 对应的就是 '/portfolio/fortune.png'
+ * 所以 public/portfolio/xxx.png 对应的就是 '/portfolio/xxx.png'
  * （不要加 /public 前缀，也不要再套引号）。
  */
 const projects: Project[] = [
@@ -23,8 +23,8 @@ const projects: Project[] = [
     id: 1,
     title: '星签',
     description: '赛博算命',
-    image: '/portfolio/fortune.png',
-    tags: ['Next.js', 'React', 'TypeScript'],
+    image: '/portfolio/fortune/fortune-text-360x150.png',
+    tags: ['Next.js', 'React', 'TypeScript', '工具', '娱乐'],
     category: '前端',
     githubUrl: 'https://github.com/Hyakuya1029/fortune-telling',
     demoUrl: 'https://fortune.hyakuya.cc.cd/',
