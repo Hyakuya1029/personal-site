@@ -191,3 +191,69 @@
 .animate-marquee {
   animation: marquee 6s linear infinite;
 }
+
+/* ════════════════════════════════════════════
+   今日表情包 — 还没戳开的那颗小气泡
+   ════════════════════════════════════════════ */
+/* 收起时缓慢呼吸，暗示「这个是能点的」 */
+@keyframes meme-breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+
+/* 戳开后「啵」地弹出来 */
+@keyframes meme-pop {
+  0%   { opacity: 0; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.meme-lid {
+  animation: meme-breathe 3.6s ease-in-out infinite;
+}
+
+.meme-reveal {
+  animation: meme-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meme-lid,
+  .meme-reveal {
+    animation: none;
+  }
+}
+
+/*
+ * 球体着色：高光收成左上角一小块，往外逐档变深到边缘，
+ * 靠 inset 阴影做出「球底暗部 + 顶部反光」的体积感。
+ * 底色用一个完整的 radial-gradient 而不是「线性渐变 + 白色蒙层」，
+ * 否则高光会铺满半个球、中间过渡发灰，浅色下像磨砂塑料。
+ */
+.meme-orb {
+  background: radial-gradient(
+    circle at 33% 27%,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(255, 255, 255, 0.72) 13%,
+    rgba(233, 251, 244, 0.92) 36%,
+    rgba(172, 236, 214, 0.96) 70%,
+    rgba(118, 212, 180, 1) 100%
+  );
+  box-shadow:
+    inset 0 -4px 8px -2px rgba(6, 95, 70, 0.3),
+    inset 0 3px 5px rgba(255, 255, 255, 0.85),
+    0 7px 16px -8px rgba(16, 185, 129, 0.55);
+}
+
+.dark .meme-orb {
+  background: radial-gradient(
+    circle at 33% 27%,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.2) 15%,
+    rgba(16, 84, 66, 0.92) 42%,
+    rgba(6, 58, 45, 0.98) 78%,
+    rgba(4, 40, 32, 1) 100%
+  );
+  box-shadow:
+    inset 0 -4px 8px -2px rgba(0, 0, 0, 0.5),
+    inset 0 2px 4px rgba(255, 255, 255, 0.22),
+    0 7px 16px -8px rgba(0, 0, 0, 0.6);
+}
