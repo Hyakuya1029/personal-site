@@ -1,48 +1,21 @@
 /*
- * 每日表情包：用「上海时区的日期」当种子，从精选集里挑一张。
+ * 今日表情包 —— 选图逻辑。
  *
- * 为什么用日期当种子：
+ * 素材不在代码里、也不在 git 里，而是放在 Supabase Storage 的 daily-gif bucket。
+ * 加一张表情包 = 往 bucket 里传一张图，不用改代码、不用推送、不用等部署。
+ *
+ * 选哪一张：拿「上海时区的今天」这个字符串算哈希，对文件总数取余。
  *   同一天所有访客看到同一张 —— 这正是「每日」该有的效果，而且结果可被缓存。
- *   日期一变自动换新，不需要任何定时任务、也不需要数据库。
+ *   日期一变自动换新，不需要定时任务、也不需要数据库表。
+ *
+ * 代价：文件数量一变（加/删图），当天的选择可能会跟着变。不影响使用，知道就行。
  */
 
-export interface DailyGifItem {
-  /** public/daily-gif/ 下的文件名。支持 .webp / .gif / .mp4 */
-  file: string;
-  /** 可选配文，显示在卡片底部 */
-  caption?: string;
-}
-
-/*
- * ══════════ 素材清单 ══════════
- *
- * 加一张新图只要两步：
- *   1. 把文件放进 public/daily-gif/（文件名建议纯英文/数字，避免空格）
- *   2. 在下面数组里加一行
- *
- * 顺序无所谓 —— 日期是通过哈希和它对应的，不是按顺序轮播。
- * 所以你可以随时往中间插、往后面加，不会打乱已过去的日期。
- *
- * 示例：
- *   { file: 'cat-typing.webp', caption: '它在替我写代码' },
- *   { file: 'spinning-fish.mp4' },
- */
-export const DAILY_GIFS: DailyGifItem[] = [
-  { file: 'nwsk.png', caption: '奶蛙思考' },
-  { file: 'nwdx.webp', caption: '奶蛙大笑' },
-  { file: 'nwnn.webp', caption: '奶蛙扭捏' },
-];
-
-// 开发期兜底：漏写扩展名会让 /daily-gif/xxx 直接 404，
-// 在页面上表现为「素材缺失」，很容易误判成接口坏了。
-if (process.env.NODE_ENV !== 'production') {
-  const missing = DAILY_GIFS.filter((i) => !/\.[a-z0-9]{2,5}$/i.test(i.file));
-  if (missing.length > 0) {
-    console.warn(
-      '[每日表情包] 这些条目缺少扩展名，访问会 404：',
-      missing.map((i) => i.file).join('、')
-    );
-  }
+export interface MemeFile {
+  /** bucket 内的文件名，例如 nwdx.webp */
+  name: string;
+  /** 公开访问地址 */
+  url: string;
 }
 
 const TZ = 'Asia/Shanghai';
@@ -59,7 +32,7 @@ export function dayKey(date: Date = new Date()): string {
 }
 
 /** FNV-1a + 收尾混合：把一个日期字符串稳定地映射成一个整数 */
-function hashString(input: string): number {
+export function hashString(input: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < input.length; i++) {
     h ^= input.charCodeAt(i);
@@ -78,34 +51,28 @@ function hashString(input: string): number {
   return h >>> 0;
 }
 
-export interface DailyGifResult {
-  /** 今天（上海时区）的日期标识 */
-  date: string;
-  /** 素材总数 */
-  total: number;
-  /** 今天的文件名，空清单时为 null */
-  file: string | null;
-  caption?: string;
-  /** 浏览器可访问的路径 */
-  src: string | null;
+/** 从文件列表里挑出今天这一张；列表为空时返回 null */
+export function pickForDay(files: MemeFile[], date: Date = new Date()): MemeFile | null {
+  if (files.length === 0) return null;
+  return files[hashString(dayKey(date)) % files.length];
 }
 
-export function getDailyGif(date: Date = new Date()): DailyGifResult {
-  const dateKey = dayKey(date);
-  const total = DAILY_GIFS.length;
+/**
+ * 距离上海时区下一个零点还有多少秒。
+ * 用来给接口设缓存的 s-maxage —— 今天的答案到明天零点才会变，没必要每个请求都算一遍。
+ */
+export function secondsUntilNextDay(date: Date = new Date()): number {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: TZ,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
 
-  // 还没有素材：返回空结果，前端显示「待补充」而不是报错
-  if (total === 0) {
-    return { date: dateKey, total: 0, file: null, src: null };
-  }
+  const pick = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+  const elapsed = pick('hour') * 3600 + pick('minute') * 60 + pick('second');
 
-  const item = DAILY_GIFS[hashString(dateKey) % total];
-
-  return {
-    date: dateKey,
-    total,
-    file: item.file,
-    caption: item.caption,
-    src: `/daily-gif/${item.file}`,
-  };
+  // 至少给 60 秒，避免刚好卡在零点时算出 0 导致不缓存
+  return Math.max(60, 86400 - elapsed);
 }
